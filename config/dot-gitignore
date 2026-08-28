@@ -1,0 +1,9 @@
+# Build output (rebuilt via `npm run build`)
+toolkit/*.cjs
+toolkit/*.cjs.map
+
+# Config overrides
+*.local.yml
+
+# Ad-hoc test/debug scratch space
+scratch/
