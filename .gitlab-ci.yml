@@ -1,0 +1,101 @@
+# GitLab CI/CD for witboost-tech-adapter-ai-toolkit
+# Pipeline: lint -> type-check -> build -> test -> audit
+# Trigger: merge requests to master
+
+stages:
+  - quality
+  - test
+  - security
+
+variables:
+  NODE_VERSION: "20"
+  # Keep npm out of the CI cache key path issues
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  # Force colored output for nicer logs
+  FORCE_COLOR: "1"
+
+# Cache npm dependencies across jobs/pipelines
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm
+  policy: pull-push
+
+.default:
+  image: node:${NODE_VERSION}-alpine
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+
+# ---------------------------------------------------------------------------
+# Quality stage
+# ---------------------------------------------------------------------------
+
+lint:
+  extends: .default
+  stage: quality
+  script:
+    - npm run lint
+
+type-check:
+  extends: .default
+  stage: quality
+  script:
+    - npm run check
+
+build:
+  extends: .default
+  stage: quality
+  script:
+    - npm run build
+  artifacts:
+    when: on_success
+    expire_in: 1 day
+    paths:
+      - dist/
+      - .witboost/toolkit/setup.cjs
+      - .witboost/toolkit/setup.cjs.map
+
+# ---------------------------------------------------------------------------
+# Test stage
+# ---------------------------------------------------------------------------
+
+test:
+  extends: .default
+  stage: test
+  needs:
+    - build
+  script:
+    - npm test
+  artifacts:
+    when: always
+    paths:
+      - .witboost/toolkit/coverage/
+    expire_in: 1 week
+
+# ---------------------------------------------------------------------------
+# Security stage
+# ---------------------------------------------------------------------------
+
+audit:
+  extends: .default
+  stage: security
+  script:
+    # Fail on high or critical vulnerabilities.
+    # Use `--audit-level=critical` to restrict to critical only.
+    # Note: this project currently has only devDependencies, so we audit all
+    # dependencies (no --omit=dev) to keep coverage meaningful.
+    - npm audit --audit-level=high
+  allow_failure: false
+
+# Pipeline rules: run only on merge requests to master
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        IS_MERGE_REQUEST: "true"
+    - if: $CI_COMMIT_BRANCH == "master"
+      variables:
+        IS_master: "true"
+    - when: never

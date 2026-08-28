@@ -1,0 +1,7 @@
+{
+  "name": "witboost-tech-adapter-ai-toolkit-cli",
+  "version": "0.1.0",
+  "description": "Witboost Tech Adapter AI Toolkit — canonical agent/skill definitions and harness setup CLI",
+  "type": "commonjs",
+  "private": true
+}

@@ -1,0 +1,35 @@
+name: "witboost-adapter-new-feature"
+displayName: "Witboost Adapter New Feature"
+description: >
+  Define or customize a Witboost tech adapter feature end to end: elicit the
+  desired business behavior, resolve template versus descriptor boundaries,
+  deploy/undeploy/validate/updateAcl lifecycle modeling, naming conventions,
+  and sync versus async choices. Use to design a new capability or customize
+  an existing one without losing lifecycle correctness.
+
+tools:
+  - read
+  - search
+  - edit
+  - todo
+
+skills:
+  - witboost-tech-adapter-ai-toolkit
+
+category: "lifecycle"
+
+handoffs:
+  - witboost-adapter-review
+  - witboost-adapter-implement
+
+harness:
+  copilot:
+    command: "witboost-adapter-new-feature"
+    argumentHint: >
+      Describe the desired business behavior of the new or changed feature —
+      not just a lifecycle name like "updateAcl".
+  claude:
+    subcommand: "witboost-adapter-new-feature"
+  codex:
+    section: "witboost-adapter-new-feature"
+  gemini: {}
