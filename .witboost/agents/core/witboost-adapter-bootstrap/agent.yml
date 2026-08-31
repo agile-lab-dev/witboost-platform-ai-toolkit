@@ -2,9 +2,12 @@ name: "witboost-adapter-bootstrap"
 displayName: "Witboost Adapter Bootstrap"
 description: >
   Start a brand-new Witboost tech adapter by cloning the Java or Python scaffold
-  into its own target repository, stripping git history, and copying `.witboost/`.
-  Use when there is no existing tech adapter repository yet and one needs to be
-  created from the official scaffold before any design or implementation work.
+  into its own target repository and stripping git history. Assumes an
+  already-installed shared Witboost workspace (see README); only copies
+  `.witboost/` and generates harness files locally when standalone/detached
+  operation is explicitly requested (--standalone). Use when there is no
+  existing tech adapter repository yet and one needs to be created from the
+  official scaffold before any design or implementation work.
 
 tools:
   - read
