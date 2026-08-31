@@ -268,9 +268,11 @@ function resolveOutputRoot(
 // to wire the shared directory in themselves.
 const SHARED_SCOPE_SETUP_HINTS: Record<string, string> = {
   copilot: [
-    "⚠ Copilot does not auto-discover a shared directory. Point it there via",
-    '  "chat.agentFilesLocations" and "chat.agentSkillsLocations" in a multi-root',
-    "  .code-workspace (or each repo's .vscode/settings.json).",
+    "✓ Wrote .vscode/settings.json in the shared directory — opening it directly",
+    "  as your workspace root now works with no further action.",
+    "⚠ Opening one adapter repo (or a multi-root .code-workspace) instead still",
+    '  needs its own "chat.agentFilesLocations" / "chat.agentSkillsLocations" — see',
+    "  docs/copilot-wiring.md.",
   ].join("\n"),
   claude: "✓ No further action needed — Claude Code auto-loads CLAUDE.md from this directory.",
   gemini: "✓ No further action needed — Gemini CLI auto-loads GEMINI.md from this directory.",
@@ -354,6 +356,45 @@ function copySkillDirs(
     }
   }
   return count;
+}
+
+// Copilot doesn't auto-discover a shared directory the way Claude/Gemini do
+// (see HarnessScope), so at shared scope we write a ready .vscode/settings.json
+// right in the shared directory: opening it as a workspace root then just
+// works, no manual JSON editing needed. Uses bare relative keys ("agents"/
+// "skills"), same as the shared dir's own root — resolves correctly only
+// when the shared dir itself is the open workspace root; a single adapter
+// repo or a multi-root .code-workspace still needs its own pointer (README).
+// Merges into any existing settings.json instead of overwriting it, since
+// this file may already hold unrelated user settings.
+function writeSharedCopilotVscodeSettings(outputRoot: string, opts: CliOptions): boolean {
+  const relPath = ".vscode/settings.json";
+  const fullPath = resolve(outputRoot, relPath);
+
+  if (opts.dryRun) {
+    console.log(`  [merge] ${relPath}`);
+    return false;
+  }
+
+  let settings: Record<string, unknown> = {};
+  if (existsSync(fullPath)) {
+    try {
+      settings = JSON.parse(readFileSync(fullPath, "utf-8"));
+    } catch {
+      console.warn(`⚠ Skipping ${relPath}: existing file is not valid JSON, leaving it untouched`);
+      return false;
+    }
+  }
+
+  const filesKey = "chat.agentFilesLocations";
+  const skillsKey = "chat.agentSkillsLocations";
+  settings[filesKey] = { ...(settings[filesKey] as Record<string, boolean>), agents: true };
+  settings[skillsKey] = { ...(settings[skillsKey] as Record<string, boolean>), skills: true };
+
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, `${JSON.stringify(settings, null, 2)}\n`, "utf-8");
+  console.log(`  [merge] ${relPath}`);
+  return true;
 }
 
 // ── Main ────────────────────────────────────────────────────────────
@@ -440,6 +481,9 @@ Generating ${target} files (scope: ${opts.scope}) → ${outputRoot}...`);
     totalFiles += copySkillDirs(agents, target, outputRoot, opts, opts.scope);
 
     if (opts.scope === "shared") {
+      if (target === "copilot") {
+        if (writeSharedCopilotVscodeSettings(outputRoot, opts)) totalFiles++;
+      }
       const hint = SHARED_SCOPE_SETUP_HINTS[target];
       if (hint) console.log(`  ${hint}`);
     }

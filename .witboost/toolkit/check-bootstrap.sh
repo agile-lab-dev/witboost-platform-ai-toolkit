@@ -11,10 +11,17 @@
 # scripts/bootstrap-new-adapter.sh a script instead of hand-run git steps.
 #
 # Usage (run from the target repo root):
-#   bash .witboost/toolkit/check-bootstrap.sh <java|python> <harness...>
+#   bash .witboost/toolkit/check-bootstrap.sh <java|python> [--standalone <harness...>]
+#
+# Without --standalone (the default bootstrap outcome), only scaffold
+# structure and git state are checked — harness files are expected to live
+# in the shared Witboost workspace, not in this repo (see README → Install
+# the Toolkit Once). Pass --standalone plus the harness(es) used with
+# `bootstrap-new-adapter.sh --standalone` to also verify the copied
+# `.witboost/` and the locally generated harness files.
 #
 # Example:
-#   bash .witboost/toolkit/check-bootstrap.sh python copilot
+#   bash .witboost/toolkit/check-bootstrap.sh python --standalone copilot
 #
 # Set SKIP_GIT_STATE=1 to skip the git-state section below. Only meaningful
 # right after scripts/bootstrap-new-adapter.sh's own commit, in the same
@@ -26,16 +33,28 @@
 
 set -uo pipefail
 
+USAGE="Usage: $0 <java|python> [--standalone <harness...>]"
+
 LANGUAGE="${1:-}"
+STANDALONE=0
+HARNESSES=()
+
 if [[ $# -gt 1 ]]; then
-  shift 1
+  if [[ "${2:-}" != "--standalone" ]]; then
+    echo "$USAGE" >&2
+    exit 1
+  fi
+  STANDALONE=1
+  shift 2
   HARNESSES=("$@")
-else
-  HARNESSES=()
+  if [[ ${#HARNESSES[@]} -eq 0 ]]; then
+    echo "--standalone requires at least one harness." >&2
+    exit 1
+  fi
 fi
 
-if [[ -z "$LANGUAGE" || ( "$LANGUAGE" != "java" && "$LANGUAGE" != "python" ) || ${#HARNESSES[@]} -eq 0 ]]; then
-  echo "Usage: $0 <java|python> <harness...>" >&2
+if [[ -z "$LANGUAGE" || ( "$LANGUAGE" != "java" && "$LANGUAGE" != "python" ) ]]; then
+  echo "$USAGE" >&2
   exit 1
 fi
 
@@ -67,7 +86,9 @@ case "$LANGUAGE" in
     ;;
 esac
 
-[[ -f "$REPO_ROOT/.witboost/toolkit/package.json" ]]; check ".witboost/ copied" $?
+if [[ $STANDALONE -eq 1 ]]; then
+  [[ -f "$REPO_ROOT/.witboost/toolkit/package.json" ]]; check ".witboost/ copied" $?
+fi
 
 UNTOUCHED=1
 if [[ "${SKIP_GIT_STATE:-0}" != "1" ]]; then
@@ -85,30 +106,34 @@ if [[ "${SKIP_GIT_STATE:-0}" != "1" ]]; then
 fi
 
 echo
-echo "Harness files:"
-for h in "${HARNESSES[@]}"; do
-    case "$h" in
-      copilot)
-        compgen -G "$REPO_ROOT/.github/agents/"*.agent.md > /dev/null; check "copilot: .github/agents/*.agent.md" $?
-        [[ -d "$REPO_ROOT/.github/skills" ]]; check "copilot: .github/skills/" $?
-        ;;
-      claude)
-        [[ -f "$REPO_ROOT/CLAUDE.md" ]]; check "claude: CLAUDE.md" $?
-        [[ -d "$REPO_ROOT/.claude/skills" ]]; check "claude: .claude/skills/" $?
-        ;;
-      gemini)
-        [[ -f "$REPO_ROOT/GEMINI.md" ]]; check "gemini: GEMINI.md" $?
-        compgen -G "$REPO_ROOT/.gemini/instructions/"*.md > /dev/null; check "gemini: .gemini/instructions/*.md" $?
-        ;;
-      codex)
-        [[ -f "$REPO_ROOT/AGENTS.md" ]]; check "codex: AGENTS.md" $?
-        ;;
-      *)
-        echo "  FAIL  unknown harness '$h'"
-        FAIL=$((FAIL + 1))
-        ;;
-    esac
-done
+if [[ $STANDALONE -eq 1 ]]; then
+  echo "Harness files:"
+  for h in "${HARNESSES[@]}"; do
+      case "$h" in
+        copilot)
+          compgen -G "$REPO_ROOT/.github/agents/"*.agent.md > /dev/null; check "copilot: .github/agents/*.agent.md" $?
+          [[ -d "$REPO_ROOT/.github/skills" ]]; check "copilot: .github/skills/" $?
+          ;;
+        claude)
+          [[ -f "$REPO_ROOT/CLAUDE.md" ]]; check "claude: CLAUDE.md" $?
+          [[ -d "$REPO_ROOT/.claude/skills" ]]; check "claude: .claude/skills/" $?
+          ;;
+        gemini)
+          [[ -f "$REPO_ROOT/GEMINI.md" ]]; check "gemini: GEMINI.md" $?
+          compgen -G "$REPO_ROOT/.gemini/instructions/"*.md > /dev/null; check "gemini: .gemini/instructions/*.md" $?
+          ;;
+        codex)
+          [[ -f "$REPO_ROOT/AGENTS.md" ]]; check "codex: AGENTS.md" $?
+          ;;
+        *)
+          echo "  FAIL  unknown harness '$h'"
+          FAIL=$((FAIL + 1))
+          ;;
+      esac
+  done
+else
+  echo "Harness files: skipped (shared workspace mode, no local generation expected)."
+fi
 
 echo
 echo "$PASS passed, $FAIL failed."

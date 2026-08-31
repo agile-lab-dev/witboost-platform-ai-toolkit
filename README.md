@@ -11,6 +11,27 @@ This repository is meant to be used in two modes:
 2. `attach existing adapter`
    Use this repository's workflow against an existing tech adapter repository.
 
+## ⚡ Quickstart
+
+1. **Install the toolkit once**, into the shared parent folder that will hold all your adapters (pick the harness(es) you use):
+
+   ```bash
+   # from this repo, after npm run build
+   node .witboost/toolkit/setup.cjs --harness copilot --scope shared --shared-dir ~/witboost/tech-adapters
+   ```
+
+2. **Bootstrap a new adapter**, or attach an existing one, inside that folder:
+
+   ```bash
+   scripts/bootstrap-new-adapter.sh python ~/witboost/tech-adapters/witboost-my-adapter
+   ```
+
+3. **Open it in your IDE** (or open the shared folder itself) and say what you want to do next, e.g. `Define support for <feature> in this adapter.`
+
+That's the whole flow. The rest of this README covers the reasoning behind
+this layout, the alternatives (per-user install, self-contained repos), and
+what to do at each phase.
+
 ## 📐 Recommended Layout
 
 A Witboost installation is rarely just one tech adapter — teams typically end
@@ -43,7 +64,7 @@ step before that.
 
 Before creating or attaching any individual adapter, install the toolkit's
 agents and skills once into the shared parent folder from
-[Recommended Layout](#recommended-layout):
+[Recommended Layout](#recommended-layout). This will be the folder containing all your tech adapters!
 
 ```bash
 # from this repo, after npm run build
@@ -57,52 +78,10 @@ skills directly into that folder. What happens next depends on the harness:
 - **Claude Code** and **Gemini CLI** pick it up automatically for every
   adapter repo nested under it — nothing else to do.
 - **Copilot** doesn't auto-discover an arbitrary shared folder for
-  independent sibling repos — wire it yourself via
-  `chat.agentFilesLocations` / `chat.agentSkillsLocations` (each is a map of
-  folder path → enabled). This only matters for a repo relying on the shared
-  install instead of local generation — see
-  [Attach Existing Adapter](#attach-existing-adapter) for when that applies;
-  a repo produced by [New Adapter](#new-adapter) already has its own
-  `.github/agents` and needs none of this. If you open all your adapters
-  together in a multi-root workspace, add both keys to its
-  `.code-workspace` file's `settings` block:
-
-  ```jsonc
-  {
-    "folders": [
-      { "path": "witboost-kafka-tech-adapter" },
-      { "path": "witboost-s3-tech-adapter" }
-    ],
-    "settings": {
-      "chat.agentFilesLocations": { "~/witboost/tech-adapters/agents": true },
-      "chat.agentSkillsLocations": { "~/witboost/tech-adapters/skills": true }
-    }
-  }
-  ```
-
-  Opening one such adapter repo at a time instead? Add the same two keys to
-  that repo's own `.vscode/settings.json` (a one-line pointer, not a content
-  copy) — use a relative path if the repo sits directly under the shared
-  folder, e.g. `"../agents"` / `"../skills"`.
-
-  Always open the shared parent folder itself as your workspace (with every
-  adapter nested inside it, as in [Recommended Layout](#recommended-layout))?
-  Skip per-workspace config entirely and set both keys **once**, in your own
-  VS Code User settings (not a workspace/repo file), using bare relative
-  names:
-
-  ```jsonc
-  "chat.agentFilesLocations": { "agents": true },
-  "chat.agentSkillsLocations": { "skills": true }
-  ```
-
-  These resolve relative to whichever folder is currently open as the
-  workspace root, so this one-time personal setting picks up the shared
-  `agents/`/`skills/` folders automatically for every future shared-scope
-  install, with nothing to add per teammate, per repo, or per `.code-workspace`
-  file. It only helps when the shared folder itself is the open workspace
-  root — opening a single adapter repo on its own still needs one of the two
-  options above.
+  independent sibling repos and needs one-time wiring — see
+  [Wiring Copilot to a Shared-Scope Install](docs/copilot-wiring.md) for the
+  options. A repo produced by [New Adapter](#new-adapter) already has its own
+  `.github/agents` and needs none of this.
 - **Codex** only reads `AGENTS.md` from inside its own git project root,
   never a parent folder. Either symlink it per repo
   (`ln -s ~/witboost/tech-adapters/AGENTS.md <adapter-repo>/AGENTS.md`) or
@@ -131,21 +110,34 @@ the user wants:
 | Python | [witboost-python-scaffold](https://github.com/agile-lab-dev/witboost-python-scaffold) |
 
 The target path must be a new, empty (or not-yet-existing) directory outside
-this toolkit repository — it becomes the tech adapter's own independent git
-repository, never a folder inside this one.
+this toolkit repository — ideally right inside your shared Witboost
+workspace from [Install the Toolkit Once](#install-the-toolkit-once-recommended),
+so agents/skills are already available with no extra step.
 
-Bootstrap it with the helper script (requires `npm run build` / `make build`
-to have run in this repo first, so `.witboost/toolkit/setup.cjs` exists):
+Bootstrap it with the helper script:
 
 ```bash
-scripts/bootstrap-new-adapter.sh <java|python> /path/to/new-tech-adapter-repo <harness...>
+scripts/bootstrap-new-adapter.sh <java|python> /path/to/new-tech-adapter-repo
 ```
 
 This clones the scaffold straight into the target path, strips exactly that
-clone's git history, initializes independent history, copies this
-repository's `.witboost/` into the target, runs the setup CLI there for
-every harness passed, and then automatically runs `check-bootstrap.sh` in
-the target repo to verify scaffold structure and harness files.
+clone's git history, and initializes independent history — that's it. 
+It then automatically runs `check-bootstrap.sh` in the target repo to verify 
+scaffold structure.
+
+If this specific adapter must be self-contained without the shared
+workspace present (e.g. handed to someone who hasn't set it up, or cloned
+in isolation), add `--standalone <harness...>` (requires `npm run build` /
+`make build` to have run in this repo first, so `.witboost/toolkit/setup.cjs`
+exists):
+
+```bash
+scripts/bootstrap-new-adapter.sh <java|python> /path/to/new-tech-adapter-repo --standalone copilot
+```
+
+This additionally copies this repository's `.witboost/` into the target and
+runs the setup CLI there for every harness passed, so the target repo works
+fully on its own.
 
 Now you can open the path in your IDE and start working on the tech adapter leveraging the injected agents. Jump to [What To Do Next](#what-to-do-next) to pick the next phase.
 
@@ -153,9 +145,9 @@ Now you can open the path in your IDE and start working on the tech adapter leve
 
 If the target repo already lives inside the shared parent folder from
 [Install the Toolkit Once](#install-the-toolkit-once-recommended) and the
-harness you use is wired up (Claude Code/Gemini CLI: automatic; Copilot: one
-of the `chat.agentFilesLocations` / `chat.agentSkillsLocations` options
-above; Codex: the symlink or `CODEX_HOME`), there's nothing to install here
+harness you use is wired up (Claude Code/Gemini CLI: automatic; Copilot: see
+[Wiring Copilot to a Shared-Scope Install](docs/copilot-wiring.md); Codex:
+the symlink or `CODEX_HOME`), there's nothing to install here
 — the agent definitions and the skill's playbooks/topics already exist in
 the shared folder, the same way they would if this repo had its own copy.
 Just open the target repo (or the shared parent folder itself) and invoke
@@ -208,16 +200,7 @@ node .witboost/toolkit/setup.cjs --harness claude --scope user
 This writes to `~/.copilot/`, `~/.claude/`, `~/.gemini/`, `~/.codex/` instead
 of a specific folder, so the agents and skills are available in *every* repo
 you open with that harness. Root instructions files are merged the same way
-as the shared install above. The trade-off versus the shared, recommended
-approach: it also reaches repos that have nothing to do with Witboost, and
-there's no single directory you can point a teammate at to reproduce the
-same setup.
-
-Per-repo generation (workspace scope, the default used by
-[New Adapter](#new-adapter) and [Attach Existing Adapter](#attach-existing-adapter))
-remains available too, and is still the only fully self-contained option — a
-repo generated that way works even if cloned on its own, with nothing to
-install first.
+as the shared install above.
 
 ## 🧭 What To Do Next
 
@@ -243,82 +226,13 @@ touches scope `docs/HLD.md` does not cover yet. New Feature and Review typically
 come first for anything non-trivial; jump straight to Implement only for
 changes small enough that the design is obvious and uncontested.
 
-## ⚙️ How It Works
+## 🧑‍💻 Contributing to This Toolkit
 
-```text
-.witboost/agents/, .witboost/skills/   ← canonical source (edit these)
-              │
-              ▼
-     .witboost/toolkit/setup.cjs       ← built CLI (npm run build)
-              │
-              ▼
-   .github/agents/*.agent.md            (Copilot)
-   .github/skills/<name>/               (Copilot, native skill discovery)
-   CLAUDE.md + .claude/skills/<name>/    (Claude Code)
-   GEMINI.md + .gemini/instructions/     (Gemini CLI)
-   AGENTS.md                            (Codex)
-```
-
-- **Canonical agents** (`.witboost/agents/core/<name>/agent.yml` + `instructions.md`) hold the agent's metadata and behavior once.
-- **Canonical skills** (`.witboost/skills/<name>/SKILL.md` + `references/` + `assets/`) hold shared domain knowledge once.
-- A `HarnessGenerator` per IDE (`copilot`, `claude`, `gemini`, `codex`) turns those canonical definitions into that IDE's native format. Copilot and Claude Code auto-discover `SKILL.md` folders, so their generators copy the skill folder as-is; Gemini and Codex don't have that convention, so their generated instructions embed a "Skills" section pointing back at the canonical `SKILL.md`.
-
-The diagram above shows the default workspace-scope output; `--scope shared` (recommended) and `--scope user` write the same files under a different root directory instead — see [Harness Generators](#harness-generators).
-
-## 📍 Main Entry Points
-
-- Canonical agent: `.witboost/agents/core/witboost-tech-adapter-ai-toolkit/agent.yml`, `instructions.md`
-- Canonical skill: `.witboost/skills/witboost-tech-adapter-ai-toolkit/SKILL.md`
-- Generated (self-hosted, tracked) Copilot agent: `.github/`
-
-`.github/agents/` and `.github/skills/` are intentionally **kept tracked in git** in this repository so the Copilot agent works here out of the box with no build step. They are regenerated from the canonical source whenever it changes — run `make setup HARNESS=copilot` after editing `.witboost/`.
-
-## 🧩 Harness Generators
-
-| Harness | Shared scope (`--scope shared --shared-dir <path>`, recommended) | Workspace scope (default, self-contained) | User scope (`--scope user`, alternative) |
-|---|---|---|---|
-| `copilot` | `<dir>/agents/<name>.agent.md`, copies `<dir>/skills/<name>/` (needs manual VS Code settings, see above) | `.github/agents/<name>.agent.md`, copies `.github/skills/<name>/` | `~/.copilot/agents/<name>.agent.md`, copies `~/.copilot/skills/<name>/` |
-| `claude` | `<dir>/CLAUDE.md` (merged), copies `<dir>/skills/<name>/` — auto-loaded, no setup | `CLAUDE.md`, copies `.claude/skills/<name>/` | `~/.claude/CLAUDE.md` (merged), copies `~/.claude/skills/<name>/` |
-| `gemini` | `<dir>/instructions/<name>.md`, `<dir>/GEMINI.md` (merged) — auto-loaded, no setup | `.gemini/instructions/<name>.md`, `GEMINI.md` | `~/.gemini/instructions/<name>.md`, `~/.gemini/GEMINI.md` (merged) |
-| `codex` | `<dir>/AGENTS.md` (merged) — needs a per-repo symlink or `CODEX_HOME` | `AGENTS.md` | `~/.codex/AGENTS.md` (merged) |
-
-`copilot` is the default harness: `.witboost/config.yml` ships with
-`harness.targets: [copilot]`, and the setup CLI falls back to `copilot` alone
-when no config file is present. Generate additional harnesses with
-`--harness <name>` (repeatable) or by listing more entries under
-`harness.targets` in config.yml — see [Install the Toolkit Once](#install-the-toolkit-once-recommended)
-(recommended), [Alternative: Per-User Install](#alternative-per-user-install),
-[New Adapter](#new-adapter), and [Attach Existing Adapter](#attach-existing-adapter).
-
-## 🛠️ Development
-
-```bash
-npm install
-npm run build     # bundles the setup CLI to .witboost/toolkit/setup.cjs
-npm test          # vitest — validates canonical agent/skill definitions
-npm run check     # tsc --noEmit
-npm run lint       # biome check
-npm run format     # biome format --write
-```
-
-Or via `make`:
-
-```bash
-make build      # npm install + npm run build
-make test       # npm test
-make check      # tsc --noEmit
-make validate   # check + build + test + dry-run every harness generator
-make setup      # regenerate harness files (all configured harnesses)
-make setup HARNESS=claude   # regenerate a single harness
-```
-
-## ✅ Validation
-
-```bash
-make validate
-```
-
-This runs, in order: type-check (`tsc --noEmit`), build the setup CLI, the vitest suite (validates `agent.yml`/`SKILL.md` frontmatter and required reference docs), and a `--dry-run` of every harness generator to catch generation errors before they reach disk.
+If you want to change how the toolkit itself works — the canonical agents,
+skills, or the setup CLI's generators — see [CONTRIBUTING.md](CONTRIBUTING.md)
+for the internal architecture, entry points, the full harness/scope path
+table, and the development/validation commands. None of that is needed just
+to use the toolkit on a tech adapter.
 
 ## 📝 Notes
 
