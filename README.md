@@ -4,7 +4,17 @@ Toolkit for creating, assessing, designing, reviewing, implementing, and testing
 
 Configure it once in a Witboost workspace folder. The folder contains generated agents and skills plus independently versioned template and tech adapter repositories.
 
-## Quickstart
+## 🗂️ Why This Layout
+
+A Witboost installation usually grows to include several tech adapters and templates. Keeping them under one workspace:
+
+- installs and updates the toolkit only once for every contained asset;
+- gives agents a consistent place to find tech adapters, templates, and their relationships;
+- preserves independent Git history, ownership, versioning, and releases for each repository.
+
+The workspace organizes the assets without turning them into a monorepo.
+
+## 🚀 Quickstart
 
 ```bash
 npm install
@@ -30,7 +40,7 @@ Open `~/witboost-workspace` in your IDE. Copilot is configured automatically for
 
 Re-run the same setup command after updating the toolkit. Generated files and managed instruction blocks are refreshed in place.
 
-## Create A Tech Adapter
+## 🛠️ Create A Tech Adapter
 
 Use the **Witboost Adapter Create** agent, or run:
 
@@ -49,7 +59,7 @@ Place each existing repository under `tech-adapters/`. Use **Witboost Adapter As
 
 Create and Assess are operations based on current repository state. They are not permanent `new` or `attach` modes.
 
-## Workflow
+## 🧭 Workflow
 
 | Goal | Agent |
 |---|---|
