@@ -2,8 +2,8 @@
 
 This project hosts the dedicated agent and skill package for Witboost tech adapter development.
 
-@.gemini/instructions/witboost-adapter-attach.md
-@.gemini/instructions/witboost-adapter-bootstrap.md
+@.gemini/instructions/witboost-adapter-assess.md
+@.gemini/instructions/witboost-adapter-create.md
 @.gemini/instructions/witboost-adapter-high-level-design.md
 @.gemini/instructions/witboost-adapter-implement.md
 @.gemini/instructions/witboost-adapter-new-feature.md

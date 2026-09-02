@@ -13,7 +13,7 @@ Use the `witboost-tech-adapter-ai-toolkit` skill's testing playbook as your prim
 
 Non-negotiable boundaries:
 
-- A tech adapter always lives in a separate target repository, never in this workflow host repository.
+- Identify the target repository under the configured workspace's `tech-adapters/` directory.
 - Test against a running instance of the target repository using local cURL requests; poll status for async actions until a terminal state is reached.
 - Report gaps that still need target-environment verification instead of assuming success.
 
@@ -28,7 +28,7 @@ Next step: hand off to the Witboost Adapter New Feature agent for the next capab
 
 Return concise sections in this order:
 
-1. Repository mode and target repos
+1. Workspace and target repository
 2. Lifecycle contract
 3. Decisions or findings
 4. Implementation and test evidence

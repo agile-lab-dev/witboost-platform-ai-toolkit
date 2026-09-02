@@ -10,8 +10,8 @@ const skillDir = resolve(repoRoot, ".witboost/skills/witboost-tech-adapter-ai-to
 const requiredReferences = [
   "references/foundations/repository-model.md",
   "references/foundations/lifecycle-contract.md",
-  "references/playbooks/bootstrap.md",
-  "references/playbooks/attach.md",
+  "references/playbooks/create-tech-adapter.md",
+  "references/playbooks/assess.md",
   "references/playbooks/high-level-design.md",
   "references/playbooks/new-feature.md",
   "references/playbooks/review.md",
@@ -25,8 +25,8 @@ const requiredReferences = [
   "references/topics/idempotency-and-retries.md",
   "references/topics/observability.md",
   "assets/decision-log-entry.md",
-  "assets/new-adapter-brief.md",
-  "assets/attach-report.md",
+  "assets/creation-result.md",
+  "assets/assessment-report.md",
   "assets/high-level-design-brief.md",
   "assets/test-matrix.md",
 ];
@@ -52,10 +52,11 @@ describe("canonical agent definition", () => {
     expect(raw.skills).toContain("witboost-tech-adapter-ai-toolkit");
   });
 
-  it("documents both repository modes", () => {
+  it("documents the workspace operations", () => {
     const content = readFileSync(resolve(agentDir, "instructions.md"), "utf-8");
-    expect(content).toMatch(/new adapter|new tech adapter/);
-    expect(content).toMatch(/attach existing adapter|attach to an existing/);
+    expect(content).toMatch(/configured Witboost workspace/);
+    expect(content).toMatch(/Create a repository/);
+    expect(content).toMatch(/assess an existing implementation/);
   });
 });
 

@@ -93,7 +93,7 @@ dataProduct:
 
 ### Existing Adapter Scan
 
-Answer these questions for every named platform resource when attaching to an existing adapter:
+Answer these questions for every named platform resource when assessing an existing adapter:
 
 1. Which platform objects are created, referenced, updated, polled, permissioned, and deleted by name or path?
 2. Where is each name computed or read during every lifecycle action, including `updateAcl`, status polling, reverse provisioning, and cleanup?

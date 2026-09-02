@@ -1,5 +1,5 @@
 import type { WitboostConfig } from "../config/schema.js";
-import type { AgentDefinition, GeneratedFile, HarnessGenerator, HarnessScope } from "./types.js";
+import type { AgentDefinition, GeneratedFile, HarnessGenerator, OutputMode } from "./types.js";
 
 export class CopilotGenerator implements HarnessGenerator {
   harnessName = "copilot";
@@ -8,12 +8,10 @@ export class CopilotGenerator implements HarnessGenerator {
     agents: AgentDefinition[],
     _config: WitboostConfig,
     _repoRoot: string,
-    scope: HarnessScope = "workspace",
+    mode: OutputMode = "folder",
   ): GeneratedFile[] {
     const files: GeneratedFile[] = [];
-    // Workspace output lives under .github/ (repo convention); user/shared-scope
-    // output is already rooted at the harness's own dir, so no extra prefix needed.
-    const prefix = scope === "workspace" ? ".github/" : "";
+    const prefix = mode === "self-host" ? ".github/" : "";
 
     for (const agent of agents) {
       // <prefix>agents/<name>.agent.md

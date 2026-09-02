@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -7,7 +8,6 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { loadConfig } from "../config/loader.js";
@@ -21,7 +21,7 @@ import type {
   AgentDefinition,
   GeneratedFile,
   HarnessGenerator,
-  HarnessScope,
+  OutputMode,
   SkillDefinition,
 } from "../generators/types.js";
 
@@ -31,14 +31,14 @@ interface CliOptions {
   harness?: string[];
   dryRun: boolean;
   force: boolean;
-  scope: HarnessScope;
-  sharedDir?: string;
+  targetDir?: string;
+  selfHost: boolean;
   configPath?: string;
   help: boolean;
 }
 
 function parseArgs(args: string[]): CliOptions {
-  const opts: CliOptions = { dryRun: false, force: false, help: false, scope: "workspace" };
+  const opts: CliOptions = { dryRun: false, force: false, help: false, selfHost: false };
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
       case "--harness":
@@ -53,19 +53,11 @@ function parseArgs(args: string[]): CliOptions {
       case "--config":
         opts.configPath = args[++i];
         break;
-      case "--scope": {
-        const value = args[++i];
-        if (value !== "workspace" && value !== "user" && value !== "shared") {
-          console.error(
-            `✗ Invalid --scope value: "${value}" (expected "workspace", "user", or "shared")`,
-          );
-          process.exit(1);
-        }
-        opts.scope = value;
+      case "--dir":
+        opts.targetDir = args[++i];
         break;
-      }
-      case "--shared-dir":
-        opts.sharedDir = args[++i];
+      case "--self-host":
+        opts.selfHost = true;
         break;
       case "--help":
       case "-h":
@@ -85,15 +77,8 @@ Usage: node .witboost/toolkit/setup.cjs [options]
 Options:
   --harness <name>    Generate files for a specific harness (copilot, claude, codex, gemini)
                       Can be specified multiple times. Default: from config.yml
-  --scope <scope>     "workspace" (default, files land in this repo), "user"
-                      (files land in the harness's own home-directory config,
-                      e.g. ~/.claude, shared across every repo on the machine),
-                      or "shared" (files land in --shared-dir, e.g. the common
-                      parent folder of several sibling adapter repos)
-  --shared-dir <path> Required when --scope is "shared". Directory to write to.
-                      Claude Code and Gemini CLI auto-load their root file from
-                      this directory if it's an ancestor of where you work;
-                      Copilot and Codex need extra manual setup (see README).
+  --dir <path>        Witboost workspace folder to configure
+  --self-host         Contributor-only: regenerate tracked files in this repository
   --dry-run           Show what files would be generated without writing them
   --force             Overwrite existing files/folders without prompting
   --config <path>     Path to config file (default: .witboost/config.yml)
@@ -200,7 +185,6 @@ function loadAgentDefinitions(
         instructions,
         harness: raw.harness as AgentDefinition["harness"],
         handoffs: raw.handoffs as string[] | undefined,
-        hostOnly: raw.hostOnly as boolean | undefined,
       });
     }
   }
@@ -217,68 +201,25 @@ const GENERATORS: Record<string, () => HarnessGenerator> = {
   gemini: () => new GeminiGenerator(),
 };
 
-// Each harness's own home-directory config folder, used when scope is "user".
-const USER_SCOPE_HOME_DIRS: Record<string, string> = {
-  copilot: ".copilot",
-  claude: ".claude",
-  codex: ".codex",
-  gemini: ".gemini",
+const NATIVE_SKILL_DIRS: Record<OutputMode, Record<string, string>> = {
+  "self-host": { copilot: ".github/skills", claude: ".claude/skills" },
+  folder: { copilot: "skills", claude: "skills", gemini: "skills", codex: "skills" },
 };
 
-// Folders skill directories get copied into, keyed by scope. At workspace
-// scope, only copilot/claude natively auto-discover a repo-convention skills
-// folder (gemini/codex instead embed a `.witboost/skills/...` text pointer,
-// see buildSkillsSection). At user/shared scope there's no `.witboost/` next
-// to the generated files, so every harness gets a colocated `skills/` copy
-// that the text pointer can reference instead.
-const NATIVE_SKILL_DIRS: Record<HarnessScope, Record<string, string>> = {
-  workspace: { copilot: ".github/skills", claude: ".claude/skills" },
-  user: { copilot: "skills", claude: "skills", gemini: "skills", codex: "skills" },
-  shared: { copilot: "skills", claude: "skills", gemini: "skills", codex: "skills" },
-};
-
-// Resolves where generated files for a given harness/scope should be written.
-function resolveOutputRoot(
-  target: string,
-  scope: HarnessScope,
-  repoRoot: string,
-  sharedDir: string | undefined,
-): string {
-  if (scope === "workspace") return repoRoot;
-
-  if (scope === "shared") {
-    if (!sharedDir) {
-      throw new Error('--shared-dir is required when --scope is "shared"');
-    }
-    return resolve(sharedDir);
-  }
-
-  const homeSubdir = USER_SCOPE_HOME_DIRS[target];
-  if (!homeSubdir) {
-    throw new Error(`No known user-scope home directory for harness "${target}"`);
-  }
-  return join(homedir(), homeSubdir);
-}
-
-// Manual follow-up steps printed after a "shared" scope run: unlike "user"
-// scope (a fixed, well-known home directory every harness already reads),
-// --shared-dir is an arbitrary path, so only Claude Code and Gemini CLI pick
-// it up with zero extra config (they load their root file from every
-// directory above the working directory). Copilot and Codex need the user
-// to wire the shared directory in themselves.
-const SHARED_SCOPE_SETUP_HINTS: Record<string, string> = {
+// Harness-specific follow-up after configuring the workspace folder.
+const FOLDER_SETUP_HINTS: Record<string, string> = {
   copilot: [
-    "✓ Wrote .vscode/settings.json in the shared directory — opening it directly",
+    "✓ Wrote .vscode/settings.json in the workspace — opening it directly",
     "  as your workspace root now works with no further action.",
     "⚠ Opening one adapter repo (or a multi-root .code-workspace) instead still",
     '  needs its own "chat.agentFilesLocations" / "chat.agentSkillsLocations" — see',
-    "  docs/copilot-wiring.md.",
+    "  the Copilot wiring guide in the toolkit repository.",
   ].join("\n"),
   claude: "✓ No further action needed — Claude Code auto-loads CLAUDE.md from this directory.",
   gemini: "✓ No further action needed — Gemini CLI auto-loads GEMINI.md from this directory.",
   codex: [
     "⚠ Codex does not read AGENTS.md above a repo's own git root. Symlink it per repo",
-    "  (ln -s <shared-dir>/AGENTS.md <adapter-repo>/AGENTS.md) or set CODEX_HOME to it.",
+    "  (ln -s <workspace>/AGENTS.md <adapter-repo>/AGENTS.md) or set CODEX_HOME to it.",
   ].join("\n"),
 };
 
@@ -323,9 +264,9 @@ function copySkillDirs(
   target: string,
   outputRoot: string,
   opts: CliOptions,
-  scope: HarnessScope,
+  mode: OutputMode,
 ): number {
-  const baseDir = NATIVE_SKILL_DIRS[scope][target];
+  const baseDir = NATIVE_SKILL_DIRS[mode][target];
   if (!baseDir) return 0;
 
   let count = 0;
@@ -342,7 +283,7 @@ function copySkillDirs(
         console.log(`  [copy] ${relDest}`);
         continue;
       }
-      if (existsSync(destPath) && !opts.force) {
+      if (mode === "self-host" && existsSync(destPath) && !opts.force) {
         console.log(`  [skip] ${relDest} (exists, use --force to overwrite)`);
         continue;
       }
@@ -358,16 +299,14 @@ function copySkillDirs(
   return count;
 }
 
-// Copilot doesn't auto-discover a shared directory the way Claude/Gemini do
-// (see HarnessScope), so at shared scope we write a ready .vscode/settings.json
-// right in the shared directory: opening it as a workspace root then just
+// Copilot does not discover an arbitrary parent folder, so write a ready
+// .vscode/settings.json into the configured workspace. Opening that folder
 // works, no manual JSON editing needed. Uses bare relative keys ("agents"/
-// "skills"), same as the shared dir's own root — resolves correctly only
-// when the shared dir itself is the open workspace root; a single adapter
+// "skills"), which resolve correctly when the workspace is open; a single adapter
 // repo or a multi-root .code-workspace still needs its own pointer (README).
 // Merges into any existing settings.json instead of overwriting it, since
 // this file may already hold unrelated user settings.
-function writeSharedCopilotVscodeSettings(outputRoot: string, opts: CliOptions): boolean {
+function writeWorkspaceCopilotSettings(outputRoot: string, opts: CliOptions): boolean {
   const relPath = ".vscode/settings.json";
   const fullPath = resolve(outputRoot, relPath);
 
@@ -397,6 +336,28 @@ function writeSharedCopilotVscodeSettings(outputRoot: string, opts: CliOptions):
   return true;
 }
 
+function prepareWorkspaceFolder(repoRoot: string, outputRoot: string, opts: CliOptions): number {
+  const assetDirs = ["tech-adapters", "templates"];
+  if (opts.dryRun) {
+    for (const dir of assetDirs) console.log(`  [create] ${dir}/`);
+    console.log("  [copy] scripts/create-tech-adapter.sh");
+    return 0;
+  }
+
+  for (const dir of assetDirs) mkdirSync(join(outputRoot, dir), { recursive: true });
+  const scriptDir = join(outputRoot, "scripts");
+  mkdirSync(scriptDir, { recursive: true });
+  cpSync(
+    join(repoRoot, "scripts/create-tech-adapter.sh"),
+    join(scriptDir, "create-tech-adapter.sh"),
+  );
+  chmodSync(join(scriptDir, "create-tech-adapter.sh"), 0o755);
+  console.log(
+    "  [workspace] ensured tech-adapters/, templates/, and scripts/create-tech-adapter.sh",
+  );
+  return 1;
+}
+
 // ── Main ────────────────────────────────────────────────────────────
 
 export async function main(): Promise<void> {
@@ -407,8 +368,8 @@ export async function main(): Promise<void> {
     printHelp();
     process.exit(0);
   }
-  if (opts.scope === "shared" && !opts.sharedDir) {
-    console.error('✗ --shared-dir is required when --scope is "shared"');
+  if (opts.selfHost === Boolean(opts.targetDir)) {
+    console.error("✗ Specify exactly one of --dir <path> or --self-host");
     process.exit(1);
   }
 
@@ -421,19 +382,14 @@ export async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Determine output directory (repo root = cwd)
   const repoRoot = process.cwd();
+  const mode: OutputMode = opts.selfHost ? "self-host" : "folder";
+  const outputRoot = opts.selfHost ? repoRoot : resolve(opts.targetDir as string);
   const witboostDir = join(repoRoot, ".witboost");
   const agentsDir = join(witboostDir, "agents");
   const skillsDir = join(witboostDir, "skills");
 
-  // scripts/bootstrap-new-adapter.sh never gets copied into a target adapter
-  // repo, so its presence is what distinguishes this toolkit's own host repo
-  // from any repo .witboost/ was copied or bootstrapped into.
-  const isHostRepo = existsSync(join(repoRoot, "scripts/bootstrap-new-adapter.sh"));
-  const agents = loadAgentDefinitions(agentsDir, skillsDir, config.includeCustom).filter(
-    (a) => !a.hostOnly || isHostRepo,
-  );
+  const agents = loadAgentDefinitions(agentsDir, skillsDir, config.includeCustom);
   if (agents.length === 0) {
     console.error("✗ No agent definitions found in .witboost/agents/");
     process.exit(2);
@@ -442,7 +398,7 @@ export async function main(): Promise<void> {
 
   const targets = opts.harness ?? config.harnessTargets;
 
-  let totalFiles = 0;
+  let totalFiles = mode === "folder" ? prepareWorkspaceFolder(repoRoot, outputRoot, opts) : 0;
   for (const target of targets) {
     const factory = GENERATORS[target];
     if (!factory) {
@@ -452,22 +408,13 @@ export async function main(): Promise<void> {
       continue;
     }
 
-    let outputRoot: string;
-    try {
-      outputRoot = resolveOutputRoot(target, opts.scope, repoRoot, opts.sharedDir);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`✗ ${msg}`);
-      process.exit(2);
-    }
-
     console.log(`
-Generating ${target} files (scope: ${opts.scope}) → ${outputRoot}...`);
+Generating ${target} files → ${outputRoot}...`);
     const generator = factory();
 
     let files: GeneratedFile[];
     try {
-      files = generator.generate(agents, config, repoRoot, opts.scope);
+      files = generator.generate(agents, config, repoRoot, mode);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`✗ Generation error (${target}): ${msg}`);
@@ -478,13 +425,13 @@ Generating ${target} files (scope: ${opts.scope}) → ${outputRoot}...`);
       if (writeFile(outputRoot, file, opts)) totalFiles++;
     }
 
-    totalFiles += copySkillDirs(agents, target, outputRoot, opts, opts.scope);
+    totalFiles += copySkillDirs(agents, target, outputRoot, opts, mode);
 
-    if (opts.scope === "shared") {
+    if (mode === "folder") {
       if (target === "copilot") {
-        if (writeSharedCopilotVscodeSettings(outputRoot, opts)) totalFiles++;
+        if (writeWorkspaceCopilotSettings(outputRoot, opts)) totalFiles++;
       }
-      const hint = SHARED_SCOPE_SETUP_HINTS[target];
+      const hint = FOLDER_SETUP_HINTS[target];
       if (hint) console.log(`  ${hint}`);
     }
   }

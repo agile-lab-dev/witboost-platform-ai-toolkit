@@ -4,7 +4,7 @@ Use the `witboost-tech-adapter-ai-toolkit` skill's implementation playbook as yo
 
 Non-negotiable boundaries:
 
-- A tech adapter always lives in a separate target repository, never in this workflow host repository.
+- Identify the target repository under the configured workspace's `tech-adapters/` directory.
 - Implement against locked decisions in `docs/decisions/DECISIONS.md`; do not silently reopen a decision instead of flagging it.
 - Do not blur template, descriptor, workload CI/CD, Witboost Builder, and tech adapter responsibilities.
 - Keep the patch set to the smallest viable change for the locked decision or reviewed finding.
@@ -19,7 +19,7 @@ Next step: hand off to the Witboost Adapter Test agent to validate the change ag
 
 Return concise sections in this order:
 
-1. Repository mode and target repos
+1. Workspace and target repository
 2. Lifecycle contract
 3. Decisions or findings
 4. Implementation and test evidence

@@ -1,5 +1,5 @@
 import type { WitboostConfig } from "../config/schema.js";
-import type { AgentDefinition, GeneratedFile, HarnessGenerator, HarnessScope } from "./types.js";
+import type { AgentDefinition, GeneratedFile, HarnessGenerator, OutputMode } from "./types.js";
 
 export class ClaudeGenerator implements HarnessGenerator {
   harnessName = "claude";
@@ -8,7 +8,7 @@ export class ClaudeGenerator implements HarnessGenerator {
     agents: AgentDefinition[],
     _config: WitboostConfig,
     _repoRoot: string,
-    scope: HarnessScope = "workspace",
+    mode: OutputMode = "folder",
   ): GeneratedFile[] {
     const sections = agents.map((agent) => this.buildSection(agent));
 
@@ -27,9 +27,7 @@ export class ClaudeGenerator implements HarnessGenerator {
         path: "CLAUDE.md",
         content: claudeMd,
         overwrite: true,
-        // At user/shared scope, CLAUDE.md is a single shared file that may
-        // already hold unrelated content — merge, don't clobber it.
-        mergeStrategy: scope !== "workspace" ? "managed-block" : "overwrite",
+        mergeStrategy: mode === "folder" ? "managed-block" : "overwrite",
       },
     ];
   }

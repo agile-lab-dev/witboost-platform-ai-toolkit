@@ -1,6 +1,6 @@
 import type { WitboostConfig } from "../config/schema.js";
 import { buildSkillsSection } from "./shared.js";
-import type { AgentDefinition, GeneratedFile, HarnessGenerator, HarnessScope } from "./types.js";
+import type { AgentDefinition, GeneratedFile, HarnessGenerator, OutputMode } from "./types.js";
 
 export class GeminiGenerator implements HarnessGenerator {
   harnessName = "gemini";
@@ -9,13 +9,11 @@ export class GeminiGenerator implements HarnessGenerator {
     agents: AgentDefinition[],
     _config: WitboostConfig,
     _repoRoot: string,
-    scope: HarnessScope = "workspace",
+    mode: OutputMode = "folder",
   ): GeneratedFile[] {
     const files: GeneratedFile[] = [];
     const importLines: string[] = [];
-    // Workspace output lives under .gemini/ (repo convention); user/shared-scope
-    // output is already rooted at the harness's own dir, so no extra prefix needed.
-    const prefix = scope === "workspace" ? ".gemini/" : "";
+    const prefix = mode === "self-host" ? ".gemini/" : "";
 
     for (const agent of agents) {
       const fileName = `${agent.name}.md`;
@@ -24,7 +22,7 @@ export class GeminiGenerator implements HarnessGenerator {
         "",
         agent.instructions.trim(),
         "",
-        buildSkillsSection(agent, scope),
+        buildSkillsSection(agent, mode),
       ].join("\n");
 
       files.push({
@@ -49,9 +47,7 @@ export class GeminiGenerator implements HarnessGenerator {
       path: "GEMINI.md",
       content: geminiMd,
       overwrite: true,
-      // At user/shared scope, GEMINI.md is a single shared file that may
-      // already hold unrelated content — merge, don't clobber it.
-      mergeStrategy: scope !== "workspace" ? "managed-block" : "overwrite",
+      mergeStrategy: mode === "folder" ? "managed-block" : "overwrite",
     });
 
     return files;

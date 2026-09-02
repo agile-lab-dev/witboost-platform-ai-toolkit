@@ -2,7 +2,7 @@
 
 Append one dated entry to `docs/decisions/DECISIONS.md` in the target adapter repository. Do not rewrite prior entries. When a decision changes, identify the superseded entry and explain compatibility or migration effects.
 
-Persist this entry at the end of every attach, new feature, review, or customize session, even when some topics remain unresolved. An entry that mixes locked and explicitly open topics is the expected, valid closing deliverable of such a session — never withhold the whole file because some questions are still open. Give every topic a status so nothing is silently dropped, and let a later session append a follow-up entry that locks the remaining ones without having to re-reconstruct the contract from scratch.
+Persist this entry at the end of every assessment, new feature, review, or customize session, even when some topics remain unresolved. An entry that mixes locked and explicitly open topics is the expected, valid closing deliverable — never withhold the whole file because some questions are still open. Give every topic a status so nothing is silently dropped, and let a later session append a follow-up entry without reconstructing the contract from scratch.
 
 ## YYYY-MM-DD — Decision Title
 

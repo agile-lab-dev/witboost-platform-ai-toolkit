@@ -1,4 +1,4 @@
-import type { AgentDefinition, HarnessScope } from "./types.js";
+import type { AgentDefinition, OutputMode } from "./types.js";
 
 /**
  * Build a Markdown section pointing to each skill's canonical reference docs.
@@ -6,12 +6,10 @@ import type { AgentDefinition, HarnessScope } from "./types.js";
  * (gemini, codex) — copilot and claude get a native copy of the skill folder
  * instead (see setup/index.ts copySkillDirs).
  *
- * At workspace scope, `.witboost/skills/` genuinely exists in the target repo,
- * so the reference points there. At user/shared scope there is no `.witboost/`
- * next to the generated file, so setup/index.ts also copies the skill folder
- * next to it (under `skills/`) and this points there instead.
+ * Self-hosted output points at the canonical `.witboost/skills/`; workspace
+ * output points at the colocated generated `skills/` copy.
  */
-export function buildSkillsSection(agent: AgentDefinition, scope: HarnessScope): string {
+export function buildSkillsSection(agent: AgentDefinition, mode: OutputMode): string {
   if (agent.resolvedSkills.length === 0) return "";
 
   const lines = ["## Skills", ""];
@@ -21,7 +19,7 @@ export function buildSkillsSection(agent: AgentDefinition, scope: HarnessScope):
     lines.push(skill.description);
     lines.push("");
     const ref =
-      scope === "workspace"
+      mode === "self-host"
         ? `.witboost/skills/${skill.name}/SKILL.md`
         : `skills/${skill.name}/SKILL.md`;
     lines.push(`Full reference: \`${ref}\``);
@@ -37,9 +35,8 @@ function escapeRegExp(value: string): string {
 }
 
 /**
- * Upsert a marked block inside a shared, user-owned file (e.g. ~/.claude/CLAUDE.md)
- * without touching anything else in it. Used only for user-scope root instructions
- * files, which the user may already populate with their own unrelated content.
+ * Upsert a marked block in a workspace-owned instructions file without
+ * touching unrelated content around it.
  */
 export function upsertManagedBlock(existing: string | undefined, block: string): string {
   const start = `<!-- ${MARKER_PREFIX}:start (auto-generated, do not edit inside this block) -->`;

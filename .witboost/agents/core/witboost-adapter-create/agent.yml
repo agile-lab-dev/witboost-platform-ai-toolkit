@@ -1,0 +1,31 @@
+name: "witboost-adapter-create"
+displayName: "Witboost Adapter Create"
+description: >
+  Create a Java or Python tech adapter repository from an official Witboost
+  scaffold inside the configured workspace's tech-adapters directory.
+
+tools:
+  - read
+  - search
+  - execute
+  - todo
+
+skills:
+  - witboost-tech-adapter-ai-toolkit
+
+category: "lifecycle"
+
+handoffs:
+  - witboost-adapter-high-level-design
+  - witboost-adapter-new-feature
+
+harness:
+  copilot:
+    command: "witboost-adapter-create"
+    argumentHint: >
+      Give the language (Java or Python) and the new tech adapter name.
+  claude:
+    subcommand: "witboost-adapter-create"
+  codex:
+    section: "witboost-adapter-create"
+  gemini: {}

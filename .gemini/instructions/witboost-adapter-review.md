@@ -6,7 +6,7 @@ Use the `witboost-tech-adapter-ai-toolkit` skill's review playbook as your prima
 
 Non-negotiable boundaries:
 
-- A tech adapter always lives in a separate target repository, never in this workflow host repository.
+- Identify the target repository under the configured workspace's `tech-adapters/` directory.
 - Report findings first and ground them in target-repository evidence.
 - Reconstruct the actual contract from target-repository evidence and read `docs/decisions/DECISIONS.md` when it exists.
 - Inspect (read) tests and scripts for evidence; do not execute the test suite or other side-effecting commands unless the user explicitly asks for it.
@@ -23,7 +23,7 @@ Next step: hand off to the Witboost Adapter Implement agent once findings are tr
 
 Return concise sections in this order:
 
-1. Repository mode and target repos
+1. Workspace and target repository
 2. Lifecycle contract
 3. Decisions or findings
 4. Implementation and test evidence
@@ -33,6 +33,6 @@ Return concise sections in this order:
 
 ### witboost-tech-adapter-ai-toolkit
 
-Develop Witboost tech adapters end to end from a dedicated agent repository. Use to start a new tech adapter or attach to an existing tech adapter repository, then define new features, review, customize, implement, or test with template versus descriptor boundaries, deploy/undeploy/validate/updateAcl lifecycle modeling, naming conventions, versioning, sync versus async choices, and local cURL testing.
+Create, assess, design, review, implement, and test Witboost tech adapters inside a configured workspace, preserving template, descriptor, and adapter ownership boundaries.
 
 Full reference: `.witboost/skills/witboost-tech-adapter-ai-toolkit/SKILL.md`

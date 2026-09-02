@@ -1,20 +1,17 @@
 ---
 name: witboost-tech-adapter-ai-toolkit
-description: "Develop Witboost tech adapters end to end from a dedicated agent repository. Use to start a new tech adapter or attach to an existing tech adapter repository, then define new features, review, customize, implement, or test with template versus descriptor boundaries, deploy/undeploy/validate/updateAcl lifecycle modeling, naming conventions, versioning, sync versus async choices, and local cURL testing."
-argument-hint: "Say whether you are starting a new tech adapter or attaching to an existing one, then add the mode, target platform or repo, related template or descriptor, and the feature or issue."
+description: "Create, assess, design, review, implement, and test Witboost tech adapters inside a configured workspace, preserving template, descriptor, and adapter ownership boundaries."
+argument-hint: "Identify the target tech adapter or say that one must be created, then describe the platform and requested capability or issue."
 ---
 
 # Witboost Tech Adapter AI Toolkit
 
-## When to Use
+## Workspace Contract
 
-- Start a new tech adapter by bootstrapping a target repository from the Java or Python Witboost scaffold
-- Attach this dedicated repository workflow to an existing (or freshly bootstrapped) tech adapter codebase
-- Define a new tech adapter feature
-- Review an existing feature or design
-- Customize an existing adapter without losing lifecycle correctness
-- Implement and test a change locally
-- Clarify whether something belongs in the template, descriptor, or adapter configuration
+- Work from the configured Witboost workspace root.
+- Tech adapter repositories live under `tech-adapters/`; template repositories live under `templates/`.
+- Identify the target repository before reading or changing adapter behavior.
+- Create and Assess are operations selected from observable repository state, not permanent repository modes.
 
 ## Reference Routing
 
@@ -27,8 +24,8 @@ Use progressive disclosure. Do not load every reference and asset for every task
 
 ### Read By Phase
 
-- New adapter: [bootstrap playbook](./references/playbooks/bootstrap.md)
-- Attach existing adapter: [attach playbook](./references/playbooks/attach.md)
+- Create a tech adapter: [Create playbook](./references/playbooks/create-tech-adapter.md)
+- Reconstruct an existing contract: [Assessment playbook](./references/playbooks/assess.md)
 - Establish or extend architecture-level scope before a first or newly scoped feature (recommended, skippable): [High-Level Design playbook](./references/playbooks/high-level-design.md)
 - New feature or customization: [New Feature playbook](./references/playbooks/new-feature.md)
 - Review: [review playbook](./references/playbooks/review.md)
@@ -51,39 +48,35 @@ Each topic is the single source for its concept, design decision, review signals
 
 ### Use By Deliverable
 
-- [Decision log entry](./assets/decision-log-entry.md) at the end of every attach, new feature, review, or customize session — even when open topics remain. Open questions are a reason to record them explicitly, never a reason to skip persistence.
-- [New adapter brief](./assets/new-adapter-brief.md) when bootstrapping
-- [Attach report](./assets/attach-report.md) when reconstructing a contract
+- [Decision log entry](./assets/decision-log-entry.md) at the end of every assessment, new feature, review, or customize session.
+- [Creation result](./assets/creation-result.md) after creating a repository
+- [Assessment report](./assets/assessment-report.md) when reconstructing a contract
 - [High-Level Design brief](./assets/high-level-design-brief.md) when establishing or extending architecture-level scope — recommended, skippable
 - [Test matrix](./assets/test-matrix.md) when designing or recording tests
 
 ## Workflow
 
-1. Establish repository mode. Either way, the tech adapter lives in its own target repository, never in this dedicated agent repository.
-2. If this is `new adapter`, follow the bootstrap playbook and then continue exactly as `attach existing adapter` against the new repository.
-3. If this is `attach existing adapter` (including a freshly bootstrapped repo), inspect the target repository and reconstruct the lifecycle and ownership boundaries from the real routes, scripts, tests, and docs.
-4. Read prior locked decisions from `docs/decisions/DECISIONS.md` when it exists.
-5. Recommended, skippable: when `docs/HLD.md` does not exist, or does not cover the requested capability or component type, run the High-Level Design playbook to establish or extend it before defining the feature.
-6. Select the relevant topics and resolve every open decision that the evidence supports.
-7. Perform the requested phase using its playbook and deliverable asset.
-8. Before ending the session, persist a decision log entry: lock what is resolved and explicitly record what is still open, with its risk, so the session closes with a well-defined deliverable instead of unrecorded open questions. Only implementation itself must wait for the specific decisions it depends on.
-9. Validate against the target repository and report unresolved target-environment gaps.
+1. Identify the target repository under `tech-adapters/`, or run Create when it does not exist.
+2. Read `docs/HLD.md` and `docs/decisions/DECISIONS.md` when present.
+3. Run Assessment only when existing behavior is not already documented well enough for the requested work.
+4. Recommend the High-Level Design playbook when architecture-level scope is missing; it remains skippable.
+5. Perform the requested phase using only the relevant topic references.
+6. Persist resolved and open decisions, then validate against the target repository.
 
-## Required Deliverables By Mode
+## Required Deliverables By Operation
 
-### New Adapter
+### Create
 
 - Chosen language and scaffold repository
-- Target repository path and bootstrap confirmation (cloned, history stripped, `.witboost/` copied)
-- Then the same deliverables as `Attach Existing Adapter`, against the newly bootstrapped repo
+- Created repository path and structural check result
 
-### Attach Existing Adapter
+### Assess
 
 - Target repo inventory
 - Reconstructed lifecycle map
 - Actual versus expected contract gaps
 - Required test coverage deltas
-- Decision log entry persisted to `docs/decisions/DECISIONS.md` covering every scanned topic — locked where evidence is conclusive, explicitly open (with its risk) where it is not. This is required to consider the attach analysis concluded, regardless of how many topics remain open.
+- Decision log entry persisted to `docs/decisions/DECISIONS.md`
 
 ### High-Level Design
 

@@ -13,7 +13,7 @@ Use the `witboost-tech-adapter-ai-toolkit` skill's New Feature playbook as your 
 
 Non-negotiable boundaries:
 
-- A tech adapter always lives in a separate target repository, never in this workflow host repository.
+- Identify the target repository under the configured workspace's `tech-adapters/` directory.
 - Elicit the desired business behavior directly from the user before validating against decisions or best practices. A bare capability or lifecycle name (e.g., "implement updateAcl") is not a specification — ask before defining anything.
 - Before a first or newly scoped feature, recommend (skippable) the Witboost Adapter High-Level Design agent when `docs/HLD.md` is missing or does not cover the requested capability, so the user is not asked to define a feature against an undocumented architecture.
 - This is a multi-turn, iterative conversation: ask a small, focused set of questions at a time and persist whatever is resolved immediately instead of waiting for every question to be answered before making progress.
@@ -33,7 +33,7 @@ Next step: hand off to the Witboost Adapter Review agent when the design should 
 
 Return concise sections in this order:
 
-1. Repository mode and target repos
+1. Workspace and target repository
 2. Lifecycle contract
 3. Decisions or findings
 4. Implementation and test evidence

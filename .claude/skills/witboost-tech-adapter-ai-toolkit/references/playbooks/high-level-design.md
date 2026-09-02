@@ -6,8 +6,8 @@ Recommended, not mandatory. The user may explicitly skip it; if so, proceed dire
 
 ## When To Run
 
-- `new adapter`, once bootstrapped, before designing its first capability, when `docs/HLD.md` does not exist yet.
-- `attach existing adapter`, when `docs/HLD.md` does not exist, or exists but does not cover the component type or lifecycle operation the requested change touches.
+- A newly created adapter before its first capability, when `docs/HLD.md` does not exist yet.
+- An existing adapter when `docs/HLD.md` does not cover the component type or lifecycle operation being changed.
 
 Skip straight to [New Feature](./new-feature.md) when `docs/HLD.md` already covers the requested scope.
 
@@ -25,7 +25,7 @@ This is an iterative process across turns and sessions, not a single questionnai
 
 ## Existing Code, Missing Or Incomplete High-Level Design
 
-Do not interview the user for behavior that already exists. Reconstruct the narrative directly from routes, descriptor models, and tests — the same evidence used in [attach](./attach.md) — draft `docs/HLD.md` from that evidence using the [High-Level Design brief](../../assets/high-level-design-brief.md), and then ask the user to review and correct the draft. A reconstructed draft is an inference, not a confirmed decision, until the user confirms it.
+Do not interview the user for behavior that already exists. Reconstruct the narrative directly from routes, descriptor models, and tests using the [assessment playbook](./assess.md), draft `docs/HLD.md` from that evidence using the [High-Level Design brief](../../assets/high-level-design-brief.md), and then ask the user to review and correct the draft. A reconstructed draft is an inference, not a confirmed decision, until the user confirms it.
 
 ## Deliverable
 

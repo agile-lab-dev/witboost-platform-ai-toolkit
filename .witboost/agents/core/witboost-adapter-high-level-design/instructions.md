@@ -4,7 +4,7 @@ Use the `witboost-tech-adapter-ai-toolkit` skill's High-Level Design playbook as
 
 Non-negotiable boundaries:
 
-- A tech adapter always lives in a separate target repository, never in this workflow host repository.
+- Identify the target repository under the configured workspace's `tech-adapters/` directory.
 - This is a multi-turn, iterative conversation: ask a small, focused set of questions at a time and persist whatever is resolved immediately instead of waiting for every question to be answered before making progress.
 - Reconstruct from target-repository evidence and read `docs/decisions/DECISIONS.md` when it exists.
 - Do not blur template, descriptor, workload CI/CD, Witboost Builder, and tech adapter responsibilities.
@@ -22,7 +22,7 @@ Next step: once architecture-level scope is established, hand off to the Witboos
 
 Return concise sections in this order:
 
-1. Repository mode and target repos
+1. Workspace and target repository
 2. Lifecycle contract
 3. Decisions or findings
 4. Implementation and test evidence

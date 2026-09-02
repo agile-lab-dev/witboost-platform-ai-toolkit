@@ -1,6 +1,6 @@
 import type { WitboostConfig } from "../config/schema.js";
 import { buildSkillsSection } from "./shared.js";
-import type { AgentDefinition, GeneratedFile, HarnessGenerator, HarnessScope } from "./types.js";
+import type { AgentDefinition, GeneratedFile, HarnessGenerator, OutputMode } from "./types.js";
 
 export class CodexGenerator implements HarnessGenerator {
   harnessName = "codex";
@@ -9,9 +9,9 @@ export class CodexGenerator implements HarnessGenerator {
     agents: AgentDefinition[],
     _config: WitboostConfig,
     _repoRoot: string,
-    scope: HarnessScope = "workspace",
+    mode: OutputMode = "folder",
   ): GeneratedFile[] {
-    const sections = agents.map((agent) => this.buildSection(agent, scope));
+    const sections = agents.map((agent) => this.buildSection(agent, mode));
 
     const agentsMd = [
       "# Witboost Tech Adapter AI Toolkit — Agent Definitions",
@@ -26,14 +26,12 @@ export class CodexGenerator implements HarnessGenerator {
         path: "AGENTS.md",
         content: agentsMd,
         overwrite: true,
-        // At user/shared scope, AGENTS.md is a single shared file that may
-        // already hold unrelated content — merge, don't clobber it.
-        mergeStrategy: scope !== "workspace" ? "managed-block" : "overwrite",
+        mergeStrategy: mode === "folder" ? "managed-block" : "overwrite",
       },
     ];
   }
 
-  private buildSection(agent: AgentDefinition, scope: HarnessScope): string {
+  private buildSection(agent: AgentDefinition, mode: OutputMode): string {
     const section = agent.harness?.codex?.section ?? agent.name;
 
     return [
@@ -41,7 +39,7 @@ export class CodexGenerator implements HarnessGenerator {
       "",
       agent.instructions.trim(),
       "",
-      buildSkillsSection(agent, scope),
+      buildSkillsSection(agent, mode),
       "---",
       "",
     ].join("\n");
