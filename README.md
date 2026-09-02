@@ -6,13 +6,10 @@ Configure it once in a Witboost workspace folder. The folder contains generated 
 
 ## 🗂️ Why This Layout
 
-A Witboost installation usually grows to include several tech adapters and templates. Keeping them under one workspace:
-
-- installs and updates the toolkit only once for every contained asset;
+A Witboost installation usually grows to include several tech adapters and templates. For this reason we recommend to have all of them grouped in one single folder.
+This has two main several benefits:
 - gives agents a consistent place to find tech adapters, templates, and their relationships;
-- preserves independent Git history, ownership, versioning, and releases for each repository.
-
-The workspace organizes the assets without turning them into a monorepo.
+- installs and updates the toolkit only once;
 
 ## 🚀 Quickstart
 
