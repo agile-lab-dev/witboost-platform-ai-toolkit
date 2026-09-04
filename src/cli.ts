@@ -79,11 +79,18 @@ export function doctorWorkspace(workspace: string): string[] {
 }
 
 function runGit(args: string[], cwd?: string): string {
-  return execFileSync("git", args, {
-    cwd,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
+  try {
+    return execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      throw new Error("Git is required to create a tech adapter but was not found in PATH.");
+    }
+    throw error;
+  }
 }
 
 export function createTechAdapter(

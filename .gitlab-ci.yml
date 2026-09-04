@@ -26,6 +26,7 @@ cache:
 .default:
   image: node:${NODE_VERSION}-alpine
   before_script:
+    - apk add --no-cache git
     - npm ci --cache .npm --prefer-offline
 
 # ---------------------------------------------------------------------------
