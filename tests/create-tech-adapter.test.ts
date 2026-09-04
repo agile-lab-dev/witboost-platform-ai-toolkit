@@ -1,11 +1,14 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createTechAdapter, setupWorkspace } from "../src/cli.js";
 
 const temporaryDirectories: string[] = [];
+const packageVersion = (
+  JSON.parse(readFileSync(resolve(__dirname, "../package.json"), "utf8")) as { version: string }
+).version;
 
 function temporaryDirectory(name: string): string {
   const path = join(tmpdir(), `${name}-${crypto.randomUUID()}`);
@@ -16,6 +19,19 @@ function temporaryDirectory(name: string): string {
 
 function git(args: string[], cwd: string): string {
   return execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
+}
+
+function installProjectSkills(workspace: string): void {
+  writeFileSync(
+    join(workspace, "skills-lock.json"),
+    `${JSON.stringify({
+      version: 1,
+      skills: {
+        "witboost-toolkit": { ref: `v${packageVersion}` },
+        "witboost-tech-adapter": { ref: `v${packageVersion}` },
+      },
+    })}\n`,
+  );
 }
 
 afterEach(() => {
@@ -62,6 +78,7 @@ describe("tech adapter creation", () => {
     );
 
     const workspace = temporaryDirectory("witboost-workspace");
+    installProjectSkills(workspace);
     setupWorkspace(workspace);
     const target = createTechAdapter(workspace, "python", "fixture-adapter", catalogPath);
 
@@ -75,6 +92,7 @@ describe("tech adapter creation", () => {
 
   it("never removes a pre-existing target", () => {
     const workspace = temporaryDirectory("witboost-workspace");
+    installProjectSkills(workspace);
     setupWorkspace(workspace);
     const target = join(workspace, "tech-adapters/existing");
     mkdirSync(target);

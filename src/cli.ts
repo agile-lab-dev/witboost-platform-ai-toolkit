@@ -16,10 +16,42 @@ import { type TechAdapterLanguage, loadScaffolds } from "./scaffolds.js";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packageJsonPath = join(packageRoot, "package.json");
 const scaffoldsPath = join(packageRoot, "config/scaffolds.json");
+const requiredSkills = ["witboost-toolkit", "witboost-tech-adapter"];
 
 function packageVersion(): string {
   const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version: string };
   return pkg.version;
+}
+
+export function projectSkillIssues(workspace: string, toolkitVersion = packageVersion()): string[] {
+  const lockPath = join(workspace, "skills-lock.json");
+  if (!existsSync(lockPath)) {
+    return [
+      `Missing skills-lock.json in the workspace root. Install the Witboost skills with Project scope from ${workspace}.`,
+    ];
+  }
+
+  let lock: { skills?: Record<string, { ref?: unknown }> };
+  try {
+    lock = JSON.parse(readFileSync(lockPath, "utf8")) as typeof lock;
+  } catch {
+    return [`Invalid skills lock JSON: ${lockPath}`];
+  }
+  if (!lock.skills || typeof lock.skills !== "object") {
+    return [`Invalid skills lock: ${lockPath}`];
+  }
+
+  const expectedRef = `v${toolkitVersion}`;
+  const issues: string[] = [];
+  for (const skill of requiredSkills) {
+    const entry = lock.skills[skill];
+    if (!entry) {
+      issues.push(`Missing project skill ${skill} in skills-lock.json.`);
+    } else if (entry.ref !== expectedRef) {
+      issues.push(`Project skill ${skill} uses ref ${String(entry.ref)}, expected ${expectedRef}.`);
+    }
+  }
+  return issues;
 }
 
 function valueAfter(args: string[], flag: string): string | undefined {
@@ -40,10 +72,13 @@ Usage:
   witboost-toolkit create tech-adapter <java|python> <name> --dir <workspace>
   witboost-toolkit --version
 
-Install agent skills separately with npx skills add.`);
+Install agent skills with Project scope from the same workspace directory before setup.`);
 }
 
 export function setupWorkspace(workspace: string, now = new Date()): void {
+  const skillIssues = projectSkillIssues(workspace);
+  if (skillIssues.length > 0) throw new Error(skillIssues.join("\n"));
+
   const managedDirectories = ["tech-adapters", "templates", "policies"];
   for (const directory of managedDirectories) {
     mkdirSync(join(workspace, directory), { recursive: true });
@@ -68,6 +103,12 @@ export function doctorWorkspace(workspace: string): string[] {
     return [error instanceof Error ? error.message : String(error)];
   }
   if (!manifest) return ["Missing .witboost-toolkit/manifest.json; run setup."];
+  if (manifest.toolkitVersion !== packageVersion()) {
+    issues.push(
+      `Workspace uses toolkit ${manifest.toolkitVersion}, but doctor is ${packageVersion()}.`,
+    );
+  }
+  issues.push(...projectSkillIssues(workspace));
   for (const directory of manifest.managedDirectories) {
     if (!existsSync(join(workspace, directory))) issues.push(`Missing ${directory}/.`);
   }

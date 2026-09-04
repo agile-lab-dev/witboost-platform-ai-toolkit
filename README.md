@@ -23,18 +23,19 @@ The common lifecycle vocabulary is `create`, `assess`, `design`, `evolve`, `revi
 
 Use the open Agent Skills installer. It maps the canonical skills to the native location of each supported coding agent.
 
-First, change to the root of the workspace where you want to use the skills. Then install them from an immutable release tag:
+Create the workspace directory and change into it. Keep this as the current directory for both skill installation and workspace setup:
 
 ```bash
-cd /path/to/your/workspace
+mkdir -p ~/witboost-workspace
+cd ~/witboost-workspace
 
 npx skills add \
-  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.1" \
+  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.2" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter
 ```
 
-When prompted for the installation scope, select **Project**. This keeps the skills associated with the current workspace and makes the setup reproducible for that project. Use **Global** only for personal skills that should be available across all your workspaces.
+When prompted for the installation scope, select **Project**. This creates `skills-lock.json` in the current workspace and makes the setup reproducible. Use **Global** only for personal skills that should be available across all your workspaces.
 
 ## Configure A Workspace
 
@@ -51,18 +52,22 @@ npm config set -- \
   "$WITBOOST_NPM_TOKEN"
 ```
 
-Then use the exact version matching the skill tag:
+From the same `~/witboost-workspace` directory, use the exact version matching the skill tag:
 
 ```bash
-npx @witboost/ai-toolkit@0.2.1 setup --dir ~/witboost-workspace
-npx @witboost/ai-toolkit@0.2.1 doctor --dir ~/witboost-workspace
+npx @witboost/ai-toolkit@0.2.2 setup --dir .
+npx @witboost/ai-toolkit@0.2.2 doctor --dir .
 ```
+
+`setup` refuses a workspace directory without the required project skill lock or with skill refs that do not match the CLI release. `doctor` verifies the same alignment again.
 
 It creates:
 
 ```text
 ~/witboost-workspace/
+├── .agents/skills/             # location varies by selected coding agent
 ├── .witboost-toolkit/manifest.json
+├── skills-lock.json
 ├── tech-adapters/
 ├── templates/
 └── policies/
@@ -73,8 +78,7 @@ The workspace is an organizational root. Implementations and decisions remain in
 ## Create A Tech Adapter
 
 ```bash
-npx @witboost/ai-toolkit@0.2.1 create tech-adapter java my-adapter \
-  --dir ~/witboost-workspace
+npx @witboost/ai-toolkit@0.2.2 create tech-adapter java my-adapter --dir .
 ```
 
 The CLI fetches the exact scaffold commit recorded in `config/scaffolds.json`, verifies its structure, writes `docs/scaffold-provenance.json`, and starts independent Git history.
