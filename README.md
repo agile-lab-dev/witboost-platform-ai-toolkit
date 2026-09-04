@@ -23,20 +23,18 @@ The common lifecycle vocabulary is `create`, `assess`, `design`, `evolve`, `revi
 
 Use the open Agent Skills installer. It maps the canonical skills to the native location of each supported coding agent.
 
-Install skills from an immutable release tag:
+First, change to the root of the workspace where you want to use the skills. Then install them from an immutable release tag:
 
 ```bash
+cd /path/to/your/workspace
+
 npx skills add \
   "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.0" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter
 ```
 
-Do not omit the tag: without `#vX.Y.Z`, `skills` follows the repository default branch instead of an immutable toolkit release.
-
-`witboost-template` and `witboost-policy` are marked internal because their contracts are not designed yet. Their repository boundaries are present, but they must not be used to invent implementation behavior.
-
-Skill installation and updates are owned by `npx skills`; this repository no longer generates skill copies for individual harnesses.
+When prompted for the installation scope, select **Project**. This keeps the skills associated with the current workspace and makes the setup reproducible for that project. Use **Global** only for personal skills that should be available across all your workspaces.
 
 ## Configure A Workspace
 
