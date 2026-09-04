@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "techAdapter": {
+    "java": {
+      "url": "https://github.com/agile-lab-dev/witboost-java-scaffold.git",
+      "commit": "a6988f7091e96c9adeac426251768ebec0ce969b",
+      "requiredPaths": ["pom.xml", "common"]
+    },
+    "python": {
+      "url": "https://github.com/agile-lab-dev/witboost-python-scaffold.git",
+      "commit": "95e7622110e3eeb033db7d9d570dfb2c27d69245",
+      "requiredPaths": ["tech-adapter/pyproject.toml"]
+    }
+  }
+}
