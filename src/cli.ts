@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -210,7 +210,18 @@ export function main(args = process.argv.slice(2)): number {
   throw new Error(`Unknown command: ${args.join(" ")}`);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+export function isCliEntryPoint(
+  entryPath: string,
+  modulePath = fileURLToPath(import.meta.url),
+): boolean {
+  try {
+    return realpathSync(entryPath) === realpathSync(modulePath);
+  } catch {
+    return false;
+  }
+}
+
+if (process.argv[1] && isCliEntryPoint(process.argv[1])) {
   try {
     process.exitCode = main();
   } catch (error) {

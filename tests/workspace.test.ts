@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { doctorWorkspace, setupWorkspace } from "../src/cli.js";
+import { doctorWorkspace, isCliEntryPoint, setupWorkspace } from "../src/cli.js";
 import { MANIFEST_PATH, readManifest } from "../src/manifest.js";
 
 const workspaces: string[] = [];
@@ -21,6 +21,16 @@ afterEach(() => {
 });
 
 describe("workspace setup", () => {
+  it("recognizes the CLI when npm invokes it through a symlink", () => {
+    const target = workspace();
+    mkdirSync(target, { recursive: true });
+    const cliPath = resolve(__dirname, "../src/cli.ts");
+    const binPath = join(target, "witboost-toolkit");
+    symlinkSync(cliPath, binPath);
+
+    expect(isCliEntryPoint(binPath, cliPath)).toBe(true);
+  });
+
   it("creates all domain roots and a versioned manifest", () => {
     const target = workspace();
     setupWorkspace(target, new Date("2026-09-03T12:00:00.000Z"));
