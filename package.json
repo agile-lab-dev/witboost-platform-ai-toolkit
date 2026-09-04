@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit/-/issues"
   },
+  "publishConfig": {
+    "registry": "https://gitlab.com/api/v4/projects/85577854/packages/npm/"
+  },
   "bin": {
     "witboost-toolkit": "dist/cli.js"
   },

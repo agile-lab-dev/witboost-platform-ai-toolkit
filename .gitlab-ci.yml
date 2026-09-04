@@ -1,11 +1,12 @@
 # GitLab CI/CD for witboost-tech-adapter-ai-toolkit
-# Pipeline: quality -> test -> package -> security
+# Pipeline: quality -> test -> package -> security -> release
 
 stages:
   - quality
   - test
   - package
   - security
+  - release
 
 variables:
   NODE_VERSION: "20"
@@ -92,7 +93,30 @@ audit:
     - npm audit --audit-level=high
   allow_failure: false
 
-# Validate merge requests, the default branch, and release tags.
+# ---------------------------------------------------------------------------
+# Release stage
+# ---------------------------------------------------------------------------
+
+publish:
+  extends: .default
+  stage: release
+  needs:
+    - lint
+    - type-check
+    - build
+    - test
+    - package
+    - audit
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+    - test "$CI_COMMIT_TAG" = "v$PACKAGE_VERSION"
+    - npm config set @witboost:registry "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/npm/"
+    - npm config set -- "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken" "${CI_JOB_TOKEN}"
+    - npm publish
+
+# Validate merge requests and the default branch; validate and publish release tags.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

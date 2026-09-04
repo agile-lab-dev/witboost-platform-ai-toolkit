@@ -23,11 +23,16 @@ The common lifecycle vocabulary is `create`, `assess`, `design`, `evolve`, `revi
 
 Use the open Agent Skills installer. It maps the canonical skills to the native location of each supported coding agent.
 
+Install skills from an immutable release tag:
+
 ```bash
-npx skills add https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git \
+npx skills add \
+  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.0" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter
 ```
+
+Do not omit the tag: without `#vX.Y.Z`, `skills` follows the repository default branch instead of an immutable toolkit release.
 
 `witboost-template` and `witboost-policy` are marked internal because their contracts are not designed yet. Their repository boundaries are present, but they must not be used to invent implementation behavior.
 
@@ -35,14 +40,25 @@ Skill installation and updates are owned by `npx skills`; this repository no lon
 
 ## Configure A Workspace
 
-The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. Once published to the configured npm registry, use an exact version:
+The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. It is published to this project GitLab npm registry by the matching release tag.
+
+Configure the token issued by Witboost before installing the private package:
+
+```bash
+export WITBOOST_NPM_TOKEN=<token-issued-by-witboost>
+npm config set @witboost:registry \
+  "https://gitlab.com/api/v4/projects/85577854/packages/npm/"
+npm config set -- \
+  "//gitlab.com/api/v4/projects/85577854/packages/npm/:_authToken" \
+  "$WITBOOST_NPM_TOKEN"
+```
+
+Then use the exact version matching the skill tag:
 
 ```bash
 npx @witboost/ai-toolkit@0.2.0 setup --dir ~/witboost-workspace
 npx @witboost/ai-toolkit@0.2.0 doctor --dir ~/witboost-workspace
 ```
-
-Until the package is published, run the same CLI from a source checkout with `npm ci`, `npm run build`, and `node dist/cli.js`.
 
 It creates:
 
@@ -73,7 +89,7 @@ Template and policy creation commands will be added only after their lifecycle c
 
 ## Versioning
 
-During prototyping, CLI and skill packs follow one synchronized `0.x` release train:
+During prototyping, CLI and skill packs follow one synchronized `0.x` release train. Tag `vX.Y.Z` must exactly match `package.json` version `X.Y.Z`; a valid tag publishes the npm package automatically after all pipeline jobs pass.
 
 - patch: compatible corrections;
 - minor: new behavior and documented breaking changes;
