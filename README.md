@@ -29,7 +29,7 @@ First, change to the root of the workspace where you want to use the skills. The
 cd /path/to/your/workspace
 
 npx skills add \
-  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.0" \
+  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.1" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter
 ```
@@ -54,8 +54,8 @@ npm config set -- \
 Then use the exact version matching the skill tag:
 
 ```bash
-npx @witboost/ai-toolkit@0.2.0 setup --dir ~/witboost-workspace
-npx @witboost/ai-toolkit@0.2.0 doctor --dir ~/witboost-workspace
+npx @witboost/ai-toolkit@0.2.1 setup --dir ~/witboost-workspace
+npx @witboost/ai-toolkit@0.2.1 doctor --dir ~/witboost-workspace
 ```
 
 It creates:
@@ -73,7 +73,7 @@ The workspace is an organizational root. Implementations and decisions remain in
 ## Create A Tech Adapter
 
 ```bash
-npx @witboost/ai-toolkit@0.2.0 create tech-adapter java my-adapter \
+npx @witboost/ai-toolkit@0.2.1 create tech-adapter java my-adapter \
   --dir ~/witboost-workspace
 ```
 
