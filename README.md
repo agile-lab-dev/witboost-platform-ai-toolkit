@@ -1,75 +1,91 @@
-# Witboost Tech Adapter AI Toolkit
+# Witboost AI Toolkit
 
-Toolkit for creating, assessing, designing, reviewing, implementing, and testing Witboost tech adapters.
+Domain-oriented Agent Skills and workspace tooling for the lifecycle of Witboost assets.
 
-Configure it once in a Witboost workspace folder. The folder contains generated agents and skills plus independently versioned template and tech adapter repositories.
+The toolkit is designed to grow across independently versioned entity types without multiplying one agent per lifecycle phase.
 
-## 🗂️ Why This Layout
+## Architecture
 
-A Witboost installation usually grows to include several tech adapters and templates. For this reason we recommend to have all of them grouped in one single folder.
-This has two main several benefits:
-- gives agents a consistent place to find tech adapters, templates, and their relationships;
-- installs and updates the toolkit only once;
+```text
+skills/
+├── witboost-toolkit/       # cross-domain router
+├── witboost-tech-adapter/  # complete domain pack
+├── witboost-template/      # reserved, intentionally incomplete
+└── witboost-policy/        # reserved, intentionally incomplete
 
-## 🚀 Quickstart
-
-```bash
-npm install
-npm run build
-node .witboost/toolkit/setup.cjs \
-  --dir ~/witboost-workspace \
-  --harness copilot
+core/                       # shared authoring contract
+src/                        # workspace CLI, not AI instructions
 ```
 
-Repeat `--harness` to install more integrations: `copilot`, `claude`, `gemini`, or `codex`.
+The common lifecycle vocabulary is `create`, `assess`, `design`, `evolve`, `review`, `implement`, and `validate`. Each domain skill defines what those phases mean for its entity.
 
-The command creates this layout without overwriting unrelated workspace instructions:
+## Install Skills
+
+Use the open Agent Skills installer. It maps the canonical skills to the native location of each supported coding agent.
+
+```bash
+npx skills add https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git \
+  --skill witboost-toolkit \
+  --skill witboost-tech-adapter
+```
+
+`witboost-template` and `witboost-policy` are marked internal because their contracts are not designed yet. Their repository boundaries are present, but they must not be used to invent implementation behavior.
+
+Skill installation and updates are owned by `npx skills`; this repository no longer generates skill copies for individual harnesses.
+
+## Configure A Workspace
+
+The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. Once published to the configured npm registry, use an exact version:
+
+```bash
+npx @witboost/ai-toolkit@0.2.0 setup --dir ~/witboost-workspace
+npx @witboost/ai-toolkit@0.2.0 doctor --dir ~/witboost-workspace
+```
+
+Until the package is published, run the same CLI from a source checkout with `npm ci`, `npm run build`, and `node dist/cli.js`.
+
+It creates:
 
 ```text
 ~/witboost-workspace/
-├── agents/ and skills/       # generated toolkit files
-├── scripts/                  # workspace utilities
-├── tech-adapters/            # independent adapter repositories
-└── templates/                # independent template repositories
+├── .witboost-toolkit/manifest.json
+├── tech-adapters/
+├── templates/
+└── policies/
 ```
 
-Open `~/witboost-workspace` in your IDE. Copilot is configured automatically for this case; see [Copilot wiring](docs/copilot-wiring.md) only when opening an individual repository or a multi-root workspace. Claude Code and Gemini CLI discover the workspace instructions automatically. Codex requires `CODEX_HOME=~/witboost-workspace` or a per-repository `AGENTS.md` symlink.
+The workspace is an organizational root. Implementations and decisions remain in independently versioned asset repositories.
 
-Re-run the same setup command after updating the toolkit. Generated files and managed instruction blocks are refreshed in place.
-
-## 🛠️ Create A Tech Adapter
-
-Use the **Witboost Adapter Create** agent, or run:
+## Create A Tech Adapter
 
 ```bash
-~/witboost-workspace/scripts/create-tech-adapter.sh \
-  <java|python> \
-  ~/witboost-workspace \
-  <adapter-name>
+npx @witboost/ai-toolkit@0.2.0 create tech-adapter java my-adapter \
+  --dir ~/witboost-workspace
 ```
 
-The utility clones the official scaffold into `tech-adapters/<adapter-name>`, removes the scaffold history, and starts independent Git history. An untouched scaffold can proceed directly to High-Level Design or New Feature.
+The CLI fetches the exact scaffold commit recorded in `config/scaffolds.json`, verifies its structure, writes `docs/scaffold-provenance.json`, and starts independent Git history.
 
-## Existing Tech Adapters
+Template and policy creation commands will be added only after their lifecycle contracts are designed.
 
-Place each existing repository under `tech-adapters/`. Use **Witboost Adapter Assess** only when its lifecycle and ownership contract need reconstruction; otherwise start directly from High-Level Design, New Feature, Review, Implement, or Test.
+## Optional Native Agents
 
-Create and Assess are operations based on current repository state. They are not permanent `new` or `attach` modes.
+`.github/agents/` contains two thin Copilot wrappers: one cross-domain router and one tech-adapter entry point. They require the corresponding skills to be installed for Copilot first. Other runtimes should use their installed skills directly. Lifecycle-phase personas are intentionally not generated.
 
-## 🧭 Workflow
+## Versioning
 
-| Goal | Agent |
-|---|---|
-| Create a repository from an official scaffold | Witboost Adapter Create |
-| Reconstruct an existing implementation contract | Witboost Adapter Assess |
-| Establish architecture-level scope | Witboost Adapter High-Level Design |
-| Define or customize behavior | Witboost Adapter New Feature |
-| Find implementation and design risks | Witboost Adapter Review |
-| Apply a locked decision | Witboost Adapter Implement |
-| Exercise a running adapter locally | Witboost Adapter Test |
+During prototyping, CLI and skill packs follow one synchronized `0.x` release train:
 
-Decisions are persisted in each adapter's `docs/decisions/DECISIONS.md`. Adapter code remains inside its own repository; the workspace root only owns toolkit configuration and asset organization.
+- patch: compatible corrections;
+- minor: new behavior and documented breaking changes;
+- `1.0.0`: stable CLI, manifest schema, skill boundaries, and migration policy.
 
-## Contributing
+The workspace manifest records the CLI release and has an independent schema version.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for canonical sources, self-hosted generation, and validation.
+## Development
+
+```bash
+npm ci
+make validate
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for source-of-truth and validation rules.

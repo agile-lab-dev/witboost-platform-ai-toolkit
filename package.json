@@ -1,26 +1,35 @@
 {
-  "name": "witboost-tech-adapter-ai-toolkit",
-  "version": "0.1.0",
-  "description": "Dedicated toolkit for defining, reviewing, implementing, and testing Witboost tech adapter features end to end",
+  "name": "@witboost/ai-toolkit",
+  "version": "0.2.0",
+  "description": "Domain-oriented agent skills and workspace tooling for Witboost assets",
   "type": "module",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/agile-lab-dev/witboost-tech-adapter-ai-toolkit.git"
+    "url": "git+https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git"
   },
-  "homepage": "https://github.com/agile-lab-dev/witboost-tech-adapter-ai-toolkit#readme",
+  "homepage": "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit",
   "bugs": {
-    "url": "https://github.com/agile-lab-dev/witboost-tech-adapter-ai-toolkit/issues"
+    "url": "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit/-/issues"
   },
+  "bin": {
+    "witboost-toolkit": "dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "config/scaffolds.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsup && node scripts/copy-assets.js",
+    "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "biome check .witboost/toolkit/src/ .witboost/toolkit/tests/",
-    "format": "biome format --write .witboost/toolkit/src/ .witboost/toolkit/tests/",
+    "lint": "biome check src/ tests/",
+    "format": "biome format --write src/ tests/",
     "check": "tsc --noEmit",
-    "setup": "node .witboost/toolkit/setup.cjs"
+    "setup": "node dist/cli.js setup"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
@@ -31,6 +40,6 @@
     "yaml": "^2.7.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }

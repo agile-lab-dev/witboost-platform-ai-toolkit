@@ -1,12 +1,11 @@
-# Witboost Tech Adapter AI Toolkit Repo
+# Witboost AI Toolkit Repository
 
-This repository hosts the dedicated agent and skill package for Witboost tech adapter development.
+This repository publishes domain-oriented Agent Skills and a separate workspace CLI.
 
 ## Rules
 
-- Treat Create and Assess as operations selected from repository state, never as permanent repository modes.
-- Keep adapter repositories under `tech-adapters/` and template repositories under `templates/` in the configured workspace.
-- Keep the distinction between the workspace root and each target asset repository explicit.
-- Any change to lifecycle semantics must be reflected in both the references and the reusable templates.
-- Do not collapse template responsibilities, descriptor responsibilities, and adapter responsibilities into one bucket.
-- When changing the agent or skill frontmatter, run `make validate`.
+- Edit canonical skills under `skills/` and keep them self-contained.
+- Treat `core/` as an authoring contract, not a runtime dependency.
+- Keep template and policy packs explicitly incomplete until their contracts are designed.
+- Keep optional native agents as thin wrappers around one skill.
+- Run `make validate` after changing skills or CLI behavior.

@@ -1,10 +1,10 @@
 # GitLab CI/CD for witboost-tech-adapter-ai-toolkit
-# Pipeline: lint -> type-check -> build -> test -> audit
-# Trigger: merge requests to master
+# Pipeline: quality -> test -> package -> security
 
 stages:
   - quality
   - test
+  - package
   - security
 
 variables:
@@ -54,8 +54,6 @@ build:
     expire_in: 1 day
     paths:
       - dist/
-      - .witboost/toolkit/setup.cjs
-      - .witboost/toolkit/setup.cjs.map
 
 # ---------------------------------------------------------------------------
 # Test stage
@@ -68,11 +66,15 @@ test:
     - build
   script:
     - npm test
-  artifacts:
-    when: always
-    paths:
-      - .witboost/toolkit/coverage/
-    expire_in: 1 week
+
+package:
+  extends: .default
+  stage: package
+  needs:
+    - build
+    - test
+  script:
+    - npm pack --dry-run
 
 # ---------------------------------------------------------------------------
 # Security stage
@@ -89,7 +91,7 @@ audit:
     - npm audit --audit-level=high
   allow_failure: false
 
-# Pipeline rules: run only on merge requests to master
+# Validate merge requests, the default branch, and release tags.
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -98,4 +100,5 @@ workflow:
     - if: $CI_COMMIT_BRANCH == "master"
       variables:
         IS_master: "true"
+    - if: $CI_COMMIT_TAG
     - when: never
