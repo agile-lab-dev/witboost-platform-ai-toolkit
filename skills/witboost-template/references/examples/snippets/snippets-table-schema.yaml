@@ -1,0 +1,189 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: om-table-schema.1
+  title: Open Metadata Table Schema Layout
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Basic table schema layout
+      properties:
+        schemaDefinition:
+          title: Define your table schema
+          type: object
+          properties:
+            schemaColumns:
+              title: Column Definitions
+              type: array
+              ui:ArrayFieldTemplate: ArrayTableTemplate
+              items:
+                type: object
+                ui:ObjectFieldTemplate: TableRowTemplate
+                required:
+                  - name
+                  - dataType
+                properties:
+                  name:
+                    type: string
+                    title: Name
+                  description:
+                    type: string
+                    title: Description
+                  dataType:
+                    type: string
+                    default: INT
+                    title: Data Type
+                    enum:
+                      - TINYINT
+                      - SMALLINT
+                      - INT
+                      - BIGINT
+                      - DOUBLE
+                      - DECIMAL
+                      - TIMESTAMP
+                      - DATE
+                      - STRING
+                      - TEXT
+                      - CHAR
+                      - VARCHAR
+                      - BOOLEAN
+                      - ARRAY
+                  constraint:
+                    type: string
+                    title: Constraint
+                    default: (no constraint)
+                    enum:
+                      - PRIMARY_KEY
+                      - NOT_NULL
+                      - UNIQUE
+                      - (no constraint)
+                allOf:
+                  - if:
+                      properties:
+                        dataType:
+                          const: ARRAY
+                    then:
+                      required:
+                        - arrayDataType
+                      properties:
+                        arrayDataType:
+                          title: Array Data Type
+                          description: Data type of the array elements
+                          type: string
+                          default: INT
+                          enum:
+                            - TINYINT
+                            - SMALLINT
+                            - INT
+                            - BIGINT
+                            - DOUBLE
+                            - DECIMAL
+                            - TIMESTAMP
+                            - DATE
+                            - STRING
+                            - TEXT
+                            - CHAR
+                            - VARCHAR
+                            - BOOLEAN
+                            - ARRAY
+                      allOf:
+                        - if:
+                            properties:
+                              arrayDataType:
+                                oneOf:
+                                  - const: TEXT
+                                  - const: VARCHAR
+                                  - const: CHAR
+                          then:
+                            properties:
+                              dataLength:
+                                title: Column Length
+                                type: integer
+                                description: Maximum length of column row
+                                default: 65535
+                            required:
+                              - dataLength
+                        - if:
+                            properties:
+                              arrayDataType:
+                                oneOf:
+                                  - const: DECIMAL
+                          then:
+                            properties:
+                              precision:
+                                title: Precision
+                                type: integer
+                                description: Precision of the numeric data type
+                                minimum: 1
+                                maximum: 38
+                                default: 38
+                              scale:
+                                title: Scale
+                                type: integer
+                                description: Scale of the numeric data type; cannot be greater than precision minus 1
+                                minimum: 0
+                                maximum: 37
+                                default: 0
+                            required:
+                              - precision
+                              - scale
+                  - if:
+                      properties:
+                        dataType:
+                          oneOf:
+                            - const: TEXT
+                            - const: VARCHAR
+                            - const: CHAR
+                    then:
+                      properties:
+                        dataLength:
+                          title: Column Length
+                          type: integer
+                          description: Maximum length of column row
+                          default: 65535
+                      required:
+                        - dataLength
+                  - if:
+                      properties:
+                        dataType:
+                          oneOf:
+                            - const: DECIMAL
+                    then:
+                      properties:
+                        precision:
+                          title: Precision
+                          type: integer
+                          description: Precision of the numeric data type
+                          minimum: 1
+                          maximum: 38
+                          default: 38
+                        scale:
+                          title: Scale
+                          type: integer
+                          description: Scale of the numeric data type; cannot be greater than precision minus 1
+                          minimum: 0
+                          maximum: 37
+                          default: 0
+                      required:
+                        - precision
+                        - scale
+                  - if: true
+                    then:
+                      properties:
+                        businessTerms:
+                          title: Business Terms
+                          type: array
+                          description: Multiple selection for fixed tags
+                          uniqueItems: true
+                          ui:style:
+                            minWidth: 400
+                          items:
+                            type: string
+                            enum:
+                              - Raw
+                              - Derived
+                              - Metadata
+                              - Identifier
+                              - Dimension
+                              - Fact

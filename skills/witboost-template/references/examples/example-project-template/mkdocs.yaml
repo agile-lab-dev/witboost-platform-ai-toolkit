@@ -1,0 +1,8 @@
+site_name: "Data Product Template"
+site_description: "Create a Data Product which contains all components to process and store domain data and makes them available to other teams via output ports."
+
+nav:
+  - Template Usage: index.md
+
+plugins:
+  - techdocs-core

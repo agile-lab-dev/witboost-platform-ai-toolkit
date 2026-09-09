@@ -1,0 +1,66 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: retrieve-data-template.1
+  title: Retrieve data
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Retrieve data
+      properties:
+        localRetrieve:
+          title: Simple retrieve from local form field
+          type: object
+          properties:
+            source:
+              type: string
+              title: Source value
+            targetValue:
+              title: Target value
+              type: string
+              ui:field: EntitySelectionPicker
+              ui:fieldName: localRetrieve
+              ui:property: source
+              ui:options:
+                allowArbitraryValues: false
+        catalogRetrieve:
+          title: Simple retrieve from entity in catalog
+          type: object
+          properties:
+            sourceValue:
+              title: Source entity
+              type: string
+              description: "EntityPicker choosing a kind: system from catalog"
+              ui:field: EntityPicker
+              ui:options:
+                allowedKinds:
+                  - System
+            targetValue:
+              title: Target value
+              type: string
+              ui:field: EntitySelectionPicker
+              ui:fieldName: catalogRetrieve.sourceValue
+              ui:property: spec.owner
+              ui:options:
+                allowArbitraryValues: false
+        catalogMultipleRetrieve:
+          title: Identities retrieval and mapping from catalog
+          properties:
+            identitiesSourceValue:
+              title: Source entity
+              type: array
+              description: "Choose some identities from the catalog"
+              ui:field: IdentitiesPicker
+              ui:options:
+                maxIdentities: 5
+                allowedKinds:
+                  - User
+                showOnlyUserMemberGroups: true
+            multipleTargetValue:
+              title: Target values
+              ui:field: EntitySelectionPicker
+              ui:fieldName: catalogMultipleRetrieve.identitiesSourceValue
+              ui:options:
+                allowArbitraryValues: false
+              ui:property: spec.profile.displayName

@@ -1,0 +1,110 @@
+apiVersion: witboost.com/v2
+kind: EditTemplate
+metadata:
+  name: edit-example-component-template.0 # this is the unique identifier for the edit template in witboost
+  title: Edit Example Component # this is the human-readable title for the edit template visible in the Witboost UI
+  description: Edit a Component created with the Example Component Template # this describes the purpose of the edit template in the Witboost UI. Not visible by the user. Does not matter to have a detailed description here.
+  mesh:
+    icon: https://cdn-icons-png.flaticon.com/512/3953/3953226.png
+  tags:
+    - component
+    - edit
+
+spec:
+  owner: witboost
+  useCaseTemplateId:
+    - urn:dmb:utm:example-component-template:0.0.0 # this must match the URN of the creation template that this Edit Template is associated with
+
+  parameters:
+    - title: Edit Component # title of the step
+      description: |
+        This wizard allows you to edit metadata and configuration for your Component.
+
+        **Not editable:** Name, Domain, Data Product, Identifier.
+
+        **Files requiring manual update:** README.md, CI/CD configuration.
+
+    - title: Update Metadata
+      type: object
+      required: # mandatory fields. if users do not provide these, the form will block the user from proceeding
+        - description
+      properties:
+        name: # always required by every Witboost component
+          title: Name
+          type: string
+          description: Not editable after creation.
+          ui:field: EntityNamePicker
+          ui:disabled: true # name is not editable in edit mode, so we disable it. We still show it to the user for reference.
+          ui:options:
+            allowArbitraryValues: true
+        domain: # always required by every Witboost component
+          title: Domain
+          type: string
+          description: Not editable after creation.
+          ui:field: EntityPicker
+          ui:disabled: true # domain is not editable in edit mode, so we disable it. We still show it to the user for reference.
+          ui:options:
+            allowArbitraryValues: false
+            allowedKinds:
+              - Domain
+        dataproduct: # always required by every Witboost component
+          title: Data Product
+          type: string
+          description: Not editable after creation.
+          ui:field: EntityPicker
+          ui:disabled: true # dataproduct is not editable in edit mode, so we disable it. We still show it to the user for reference.
+          ui:filter:
+            - fieldName: domain
+              entityPath: spec.domain
+          ui:options:
+            allowArbitraryValues: false
+            allowedKinds:
+              - System
+        identifier: # always required by every Witboost component
+          title: Identifier
+          type: string
+          description: Not editable after creation.
+          ui:disabled: true # identifier is not editable in edit mode
+        owner: # no need to disable as it is auto-selected from the parent Data Product
+          title: Component Owner
+          type: string
+          description: Automatically selected from the Data Product metadata.
+          ui:field: EntitySelectionPicker
+          ui:fieldName: dataproduct
+          ui:property: spec.owner
+          ui:options:
+            allowArbitraryValues: false
+        description:
+          title: Description
+          type: string
+          description: Description of purpose and scope of this Component.
+        dependsOn:
+          title: Depends on
+          type: array
+          default: []
+          items:
+            type: string
+            ui:field: EntityComponentsPicker
+            ui:fieldName: dataproduct
+            ui:options:
+              allowArbitraryValues: false
+        tags:
+          title: Tags
+          type: array
+          description: Tags for classification and search.
+          default: []
+          items:
+            type: string
+
+    # You can always add additional update steps here as needed.
+    # Usually, the edit template has the same steps of the creation template. Sometimes the edit template presents more fields compared to the creation template.
+    # The more steps you add, the more complex your component setup can become and the user may lose track of the overall flow. For edit template, having more steps and fields is fine, since users can update different aspects of the component as needed and at different times.
+    - title: Update Configuration
+      description: Technology-specific configuration for this Component.
+      properties:
+        exampleProperty:
+          title: Example Property
+          type: string
+          description: An example property for the additional step. Replace with tech-adapter-specific fields.
+
+# the edit template has no steps section nor outputs section

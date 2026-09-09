@@ -1,0 +1,31 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: ${{ values.identifier }}
+  description: ${{ values.description | dump }} # "dump" ensures the description is properly formatted as a string in the output YAML
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    witboost.com/repo-name: ${{ values.repoName }}
+    witboost.com/end-user-docs-ref: dir:./consumer-docs
+spec:
+  type: dataproduct # this must match the system type that is defined in the project template. e.g. if "generates" is "systemtype:default/dataproduct" then this should be "dataproduct"
+  lifecycle: experimental 
+  owner: ${{ values.projectOwner | dump }}
+  domain: ${{ values.domain | dump }}
+  mesh:
+    dataProductOwner: ${{ values.projectOwner | dump }} 
+    devGroup: ${{ values.developmentGroup | dump }}
+    email: ${{ values.email | dump }}
+    name: ${{ values.name | dump }}
+    version: 0.1.0
+    fullyQualifiedName: ${{ values.domainName + " - " + values.name | dump }}
+    description: ${{ values.description | dump }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    tags: {% if values.tags | length > 0 %}{% for tag in values.tags %}
+      - tagFQN: ${{ tag }}
+        source: Tag
+        labelType: Manual
+        state: Confirmed{% endfor %}{% else %}[]{% endif %}
+    specific: {} # if the data product has any specific infrastructural attributes, because its deployment passes through a real tech adapter and not a mock one, they can be added here

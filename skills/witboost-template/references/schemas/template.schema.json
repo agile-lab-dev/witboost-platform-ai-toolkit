@@ -1,0 +1,240 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://witboost.com/schemas/template.schema.json",
+  "title": "Witboost Creation Template",
+  "description": "Schema for template.yaml files that define the wizard form and execution steps for creating Witboost entities (Systems, Components). The template collects user input via a multi-page wizard, renders skeleton files with Nunjucks, publishes to Git, and registers the entity in the catalog.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "const": "scaffolder.backstage.io/v1beta3"
+    },
+    "kind": {
+      "const": "Template"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "title", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "description": "Unique template identifier. Lowercase, alphanumeric, dashes, dots, underscores."
+        },
+        "title": {
+          "type": "string",
+          "description": "Display name shown in the template catalog."
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of what this template creates."
+        },
+        "mesh": {
+          "type": "object",
+          "properties": {
+            "icon": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to the icon displayed in the template catalog."
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags for filtering and categorizing templates."
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {
+            "backstage.io/techdocs-ref": {
+              "type": "string",
+              "description": "TechDocs reference. Typically 'dir:.' for co-located documentation."
+            }
+          },
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["generates", "owner", "type", "parameters", "steps"],
+      "properties": {
+        "generates": {
+          "type": "string",
+          "description": "Entity type this template creates. Format depends on the Practice Shaper configuration. Default Data Mesh values: 'componenttype:default/outputport', 'componenttype:default/workload', 'componenttype:default/storage', 'systemtype:default/dataproduct'. Custom practices may define different types.",
+          "examples": [
+            "componenttype:default/outputport",
+            "componenttype:default/workload",
+            "componenttype:default/storage",
+            "systemtype:default/dataproduct"
+          ]
+        },
+        "owner": {
+          "type": "string",
+          "description": "Owner of this template definition (group or user identifier)."
+        },
+        "type": {
+          "type": "string",
+          "description": "Component/system type this template creates. Must align with the 'generates' value (e.g., 'outputport' for 'componenttype:default/outputport').",
+          "examples": ["outputport", "workload", "storage", "dataproduct"]
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Array of wizard pages. Each element defines one page of the creation form with its own title, required fields, and property definitions.",
+          "items": { "$ref": "#/$defs/wizardPage" },
+          "minItems": 1
+        },
+        "steps": {
+          "type": "array",
+          "description": "Ordered list of actions executed after the user completes the wizard. Typical sequence: fetch:template → publish → register.",
+          "items": { "$ref": "#/$defs/step" },
+          "minItems": 1
+        },
+        "output": {
+          "type": "object",
+          "description": "Values and links shown to the user after template execution completes.",
+          "properties": {
+            "links": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "url": { "type": "string" },
+                  "icon": { "type": "string" },
+                  "entityRef": { "type": "string" }
+                }
+              }
+            }
+          },
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "wizardPage": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title displayed at the top of this wizard page."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional help text shown below the title. Supports markdown."
+        },
+        "type": {
+          "type": "string",
+          "const": "object"
+        },
+        "required": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Property names that must be filled before the user can proceed to the next page."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Form field definitions. Each key is a field name, each value is a JSON Schema definition with optional Witboost UI extensions.",
+          "additionalProperties": { "$ref": "#/$defs/formField" }
+        },
+        "allOf": {
+          "type": "array",
+          "description": "Conditional logic using JSON Schema if/then/else for dynamically showing/hiding fields based on other field values.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "if": { "type": "object" },
+              "then": { "type": "object" },
+              "else": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "formField": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Label displayed for this field."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "integer", "boolean", "array", "object"],
+          "description": "JSON Schema data type."
+        },
+        "description": {
+          "type": "string",
+          "description": "Help text shown below the field."
+        },
+        "default": {
+          "description": "Default value pre-filled in the form."
+        },
+        "enum": {
+          "type": "array",
+          "description": "Fixed list of allowed values. Renders as a dropdown."
+        },
+        "format": {
+          "type": "string",
+          "description": "Format validation hint (e.g., 'email', 'uri')."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for string validation."
+        },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "minLength": { "type": "integer" },
+        "maxLength": { "type": "integer" },
+        "items": {
+          "description": "Schema for array element items when type is 'array'."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Nested property definitions when type is 'object'.",
+          "additionalProperties": { "$ref": "#/$defs/formField" }
+        },
+        "required": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "step": {
+      "type": "object",
+      "required": ["id", "name", "action"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique step identifier. Used to reference this step's outputs in later steps via ${{ steps.<id>.output.* }}."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name displayed during execution."
+        },
+        "action": {
+          "type": "string",
+          "description": "Action to execute.",
+          "examples": [
+            "fetch:template",
+            "witboostMeshComponent:publish:gitlab",
+            "witboostMeshComponent:publish:github",
+            "witboostMeshComponent:publish:azure",
+            "witboostMeshComponent:publish:bitbucketServer",
+            "catalog:register",
+            "fs:delete"
+          ]
+        },
+        "input": {
+          "type": "object",
+          "description": "Action-specific input parameters. Values support Nunjucks expressions: ${{ parameters.fieldName }}, ${{ steps.stepId.output.fieldName }}.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

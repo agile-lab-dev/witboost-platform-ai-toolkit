@@ -1,0 +1,51 @@
+{# Component skeleton catalog-info.yaml
+   This is a GENERIC component template. The "kind" field in spec.mesh
+   and spec.type must match the component type (outputport, workload, storage, etc.).
+   The spec.mesh.specific section below is EMPTY because it depends on the tech adapter.
+   Replace its contents with the fields your tech adapter expects.
+   Consult your tech adapter's README for the required structure. #}
+{% set domainNormalized = values.domain | replace(r/domain:| |-/, "") %}
+{% set dataProductMajorVersion = values.identifier.split(".")[2] %}
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.identifier }}
+  description: ${{ values.description | dump }} # "dump" ensures the description is properly formatted as a string in the output YAML
+  tags: [] # tags can be added here if needed
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: outputport # this must match the component type defined in the template. e.g. if "generates" is "componenttype:default/outputport" then this should be "outputport". Other common values: workload, storage
+  lifecycle: experimental
+  owner: ${{ values.owner | dump }}
+  system: ${{ values.dataproduct | dump }} # links this component to its parent Data Product (system)
+  domain: ${{ values.domain | dump }}
+  mesh:
+    name: ${{ values.name | dump }}
+    fullyQualifiedName: ${{ domainNormalized }} - ${{ values.name }}
+    description: ${{ values.description | dump }}
+    kind: outputport # must match spec.type above
+    version: ${{ dataProductMajorVersion + ".0.0" }}
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn: {% if values.dependsOn | length > 0 %}{% for i in values.dependsOn %}
+      - ${{ i }}{% endfor %}{% else %}[]{% endif %}
+    platform: Example # replace with the actual platform name (e.g. Snowflake, AWS, Azure, GCP)
+    technology: Example # replace with the actual technology name (e.g. Snowflake, S3, BigQuery)
+    tags: {% if values.tags | length > 0 %}{% for tag in values.tags %}
+      - tagFQN: ${{ tag }}
+        source: Tag
+        labelType: Manual
+        state: Confirmed{% endfor %}{% else %}[]{% endif %}
+    # ──────────────────────────────────────────────────────────
+    # spec.mesh.specific: TECH-ADAPTER-DEFINED
+    # This section contains the fields expected by the tech adapter
+    # responsible for provisioning this component.
+    # If the component uses a mock tech adapter (no deployment,
+    # metadata only), this can be left empty: specific: {}
+    # If it uses a real tech adapter, consult its README for the
+    # required structure and replace the content below.
+    # NEVER invent fields here — always ask what the tech adapter expects.
+    # ──────────────────────────────────────────────────────────
+    specific: {}

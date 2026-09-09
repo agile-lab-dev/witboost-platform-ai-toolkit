@@ -1,0 +1,170 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: layouts-template.1
+  title: Form Layouts
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Form Layouts
+      description: |-
+        # Layouts
+
+        While building templates, it is usually beneficial to improve them not only technically, but also visually. To improve the user experience of a Witboost user that needs to create a component, we can arrange the fields in a template using different layouts. Witboost support grouping common fields, creating horizontal layouts, and tables.
+      
+        ![Witboost templates](https://witboost.com/hubfs/Witboost%20Core%20Capabilities%20-%20Q1%202024/Build/Final/BUILD%20-%20TEMPLATES%20v2.png)
+
+        **Contents**
+        - Object layout - Number fields
+        - Horizontal layout
+        - Table layout
+        
+      properties:
+        numberFields:
+          title: Number fields
+          type: object
+          description: Number fields are a way to enforce an input to accept only integer values
+          required:
+            - numberField
+          properties:
+            numberField:
+              title: Integer field
+              type: number
+            constrainedNumberField:
+              title: Number field with constraint 0 <= x <= 10
+              type: number
+              minimum: 0
+              maximum: 10
+        noTitleGroup:
+          type: object
+          ui:options:
+            displayTitle: false
+          properties:
+            name:
+              title: Field in non-title object
+              type: string
+        horizontalLayout:
+          title: Horizontal layout
+          type: object
+          ui:ObjectFieldTemplate: HorizontalTemplate
+          properties:
+            fieldOne:
+              title: Field 1
+              type: string
+            fieldTwo:
+              title: Field 2
+              type: string
+              enum:
+                - Option 1
+                - Option 2
+            fieldThree:
+              title: Field 3
+              type: boolean
+        horizontalLayoutOptions:
+          title: Horizontal layout - 8 default width elements
+          type: object
+          ui:ObjectFieldTemplate: HorizontalTemplate
+          ui:options:
+            elementsPerRow: 8
+          properties:
+            fieldA:
+              title: Field A
+              type: string
+            fieldB:
+              title: Field B
+              type: boolean
+            fieldC:
+              title: Field C
+              type: string
+            fieldD:
+              title: Field D
+              type: string
+              format: date
+            fieldE:
+              title: Field E
+              type: integer
+            fieldF:
+              title: Field in non-title object
+              type: string
+              default: Disabled
+              ui:disabled: true
+            fieldG:
+              title: Field in non-title object
+              type: string
+              ui:style:
+                marginTop: 20px
+                background: "#111"
+                color: "#0f0"
+                font-family: Consolas
+        horizontalLayoutOptionsMinElementWidth:
+          title: Horizontal layout - 8 shorter width elements
+          type: object
+          ui:ObjectFieldTemplate: HorizontalTemplate
+          ui:options:
+            elementsPerRow: 8
+            minElementWidth: 150
+          properties:
+            fieldA:
+              title: Field A
+              type: string
+            fieldB:
+              title: Field B
+              type: boolean
+            fieldC:
+              title: Field C
+              type: string
+            fieldD:
+              title: Field D
+              type: string
+              format: date
+            fieldE:
+              title: Field E
+              type: integer
+            fieldF:
+              title: Field in non-title object
+              type: string
+              default: Disabled
+              ui:disabled: true
+            fieldG:
+              title: Field in non-title object
+              type: string
+              ui:style:
+                marginTop: 20px
+                background: "#111"
+                color: "#0f0"
+                font-family: Consolas
+        tableExample:
+          title: Table Example
+          type: array
+          ui:ArrayFieldTemplate: ArrayTableTemplate
+          ui:options:
+            maxDescriptionRows: 2
+          default: []
+          items:
+            type: object
+            ui:ObjectFieldTemplate: TableRowTemplate
+            required:
+              - name
+              - dataType
+            properties:
+              name:
+                title: Name
+                type: string
+              surname:
+                title: Surname
+                type: string
+              salary:
+                title: Salary
+                type: number
+              department:
+                title: Department
+                type: string
+                enum:
+                  - Finance
+                  - Marketing
+                  - IT
+                  - Sales
+              country:
+                type: string
+                title: Country

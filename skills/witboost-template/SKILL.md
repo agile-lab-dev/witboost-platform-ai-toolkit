@@ -1,30 +1,193 @@
 ---
 name: witboost-template
-description: "Develop the lifecycle of Witboost templates. This pack currently defines only repository and ownership boundaries; use it to scope future template work, not to invent or implement template behavior."
-metadata:
-  internal: true
+description: 'Create or modify Witboost templates (creation templates, edit templates, catalog-info skeletons). Use when: creating a new Witboost template, scaffolding a template.yaml, generating skeleton/catalog-info.yaml, building an edit-template.yaml, designing a Witboost wizard form, connecting a template to a tech adapter. Covers all component types: output port, workload, storage, data product, system, and custom Practice Shaper types.'
+argument-hint: 'Describe what kind of template you need (e.g., "Snowflake output port template for Azure DevOps")'
 ---
 
-# Witboost Template
+# Create Witboost Template
 
-## Status
+## When to Use
 
-This domain pack is intentionally incomplete. Its structure reserves the template lifecycle boundary while requirements are collected.
+- User wants to create a new Witboost creation template (`template.yaml`)
+- User wants to create or update an edit template (`edit-template.yaml`)
+- User wants to generate a skeleton `catalog-info.yaml` for a component
+- User wants to connect a template to a specific tech adapter
+- User asks about Witboost template structure, schema, or conventions
 
-## Repository Contract
+## Knowledge Base
 
-- Template repositories live under `templates/<repository>/`.
-- A template may own scaffolding, initial metadata, generated files, and user-facing parameters.
-- A template must not silently take ownership of runtime provisioning that belongs to a tech adapter or another runtime component.
-- Template implementation and decisions stay in the template repository.
+Read these files before generating any template:
 
-## Lifecycle
+- [Overview](./references/overview.md) — what templates are, wizard + skeleton, descriptor assembly
+- [Template Anatomy](./references/template-anatomy.md) — folder structure, Practice Shaper variability, tech adapter contract, monorepo/multi-repo, Nunjucks templating, edit templates
+- [Form Fields and Widgets](./references/template-fields.md) — field types, validation, objects, arrays, conditionals, layouts, UI directives, YAML substitution
+- [Manifest Schema Reference](./references/manifest-schema.md) — how the 4 JSON schemas relate, descriptor assembly flow
+- [Conventions](./references/conventions.md) — URN format, naming rules, versioning, git provider publish variants, UX principles, standard fields, repo naming
+- [Checklist](./references/checklist.md) — pre-delivery validation checklist
 
-The domain will provide playbooks for `create`, `assess`, `design`, `evolve`, `review`, `implement`, and `validate`.
+### JSON Schemas
 
-Until those playbooks are defined:
+- [template.schema.json](./references/schemas/template.schema.json) — creation template structure
+- [edit-template.schema.json](./references/schemas/edit-template.schema.json) — edit template structure
+- [catalog-info.schema.json](./references/schemas/catalog-info.schema.json) — skeleton catalog-info structure
+- [parameters.schema.json](./references/schemas/parameters.schema.json) — skeleton parameters structure
 
-1. Identify the target and related repositories.
-2. Capture desired business behavior and ownership boundaries.
-3. Record open design questions.
-4. Stop before implementation or validation claims.
+### Examples - Gold standards
+
+Complete working examples for each component type:
+
+- [Project (e.g. a Data Product)](./references/examples/example-project-template/) - complete working example for a generic project template. then customer may add project-specific files in `skeleton/` as needed.
+- [Component (e.g. an Output Port or a Storage Area or a Workload)](./references/examples/example-component-template/) — complete working example for a generic component template. then customer may add component-specific files in `skeleton/` as needed. 
+
+### Reusable Snippets
+
+- [snippets-component-metadata.yaml](./references/examples/snippets/snippets-component-metadata.yaml) — standard component metadata wizard page (name, domain, dataproduct, identifier, owner, dependsOn, tags)
+- [snippets-basic-fields.yaml](./references/examples/snippets/snippets-basic-fields.yaml) — catalog of all basic field types (string, number, boolean, date, array)
+- [snippets-conditional-fields.yaml](./references/examples/snippets/snippets-conditional-fields.yaml) — conditional field patterns (boolean toggle, enum-based, array contains, dependencies+oneOf)
+- [snippets-table-schema.yaml](./references/examples/snippets/snippets-table-schema.yaml) — table schema layout with nested conditionals per data type
+- [snippets-layouts.yaml](./references/examples/snippets/snippets-layouts.yaml) — object, horizontal, and table layout examples
+- [snippets-dynamic-select.yaml](./references/examples/snippets/snippets-dynamic-select.yaml) — DescriptorPicker for dynamic selects from local fields and catalog entities
+- [snippets-retrieve-data.yaml](./references/examples/snippets/snippets-retrieve-data.yaml) — EntitySelectionPicker patterns for retrieving data from catalog entities
+
+## Procedure
+
+### Step 1: Gather Requirements
+
+Ask the user these questions before generating anything. Do NOT skip this step.
+
+When an interactive question tool is available, use it instead of plain text: present each question with predefined selectable options (plus free-text input) so the user can click rather than type. Batch related questions into a single round instead of asking one at a time.
+
+**Always ask first (these save many follow-up questions):**
+1. Do you already have other templates? If yes, point me to the folder — I'll read them to understand your conventions, repo structure, naming patterns, and Practice Shaper configuration.
+2. Do you have the tech adapter codebase or README that will provision this component? If yes, point me to it — I'll read it to extract the fields it expects in `spec.mesh.specific` and any validation rules.
+3. Do you have an existing example project which we can use as a reference for this template? If yes, point me to it — I'll read it to understand the structure, conventions, and any specific patterns it follows. 
+
+If the user provides existing templates or a tech adapter codebase, read them FIRST. Infer Practice Shaper terminology, monorepo/multi-repo strategy, Git provider, URN conventions, repo naming convention, and `spec.mesh.specific` fields from them instead of asking redundant questions.
+
+**Then ask (skip what was already inferred):**
+
+**Template scope:**
+4. What type of component does this template create? (output port, workload, storage, system, or custom type)
+5. What technology does it target? (Snowflake, S3, Databricks, Spark, etc.)
+
+**Tech adapter contract** (skip if inferred from tech adapter codebase):
+6. What tech adapter will provision this component? Is it a real tech adapter or a **mock tech adapter**?
+    - If the user says things like "no deployment", "mock tech adapter", "deployment is mocked", "no infrastructure changes", "metadata-only component" → the component uses a mock tech adapter (always returns success, no real provisioning).
+    - If it's a real tech adapter: what fields does it expect in `spec.mesh.specific`?
+    - If it's a mock: `spec.mesh.specific` can be empty or contain only metadata fields.
+
+**URNs:**
+7. Every template needs two identifiers (URNs). Explain them to the user:
+    - **`useCaseTemplateId`**: uniquely identifies this template. Format: `urn:dmb:utm:{name}:{version}`. Example: `urn:dmb:utm:snowflake-outputport-template:0.0.0`
+    - **`infrastructureTemplateId`**: links the component/system to the tech adapter microservice that will be invoked when deploying. Format: `urn:dmb:itm:{name}:{version}`. Example: `urn:dmb:itm:snowflake-outputport-provisioner:0`
+    - Ask: "Do you want me to generate these based on the template name and tech adapter, or do you want to specify them yourself?"
+    - If auto-generating: derive from template name and tech adapter name (e.g., template "Snowflake Output Port" → `urn:dmb:utm:snowflake-outputport-template:0.0.0`)
+    - Always tell the user what URNs you generated.
+
+**Repository strategy:**
+8. Monorepo or multi-repo?
+    - **Monorepo**: all components live in the same Git repo as the parent system.
+    - **Multi-repo**: each component gets its own dedicated Git repo.
+9. Which Git provider? (GitLab, GitHub, Azure DevOps, Bitbucket Server)
+10. Do you have a specific repo naming convention? If not, I'll use: `wit-dp-<system-name>` for systems and `wit-cmp-<component-name>` for components (multi-repo). Clearly communicate the convention to the user.
+
+**Additional wizard fields:**
+11. The creation wizard will automatically include the standard Witboost fields (name, description, domain, data product, identifier, owner, dependencies, tags). These are required by the platform.
+    - Do you need any **additional** fields beyond the standard ones? For example: schema columns, connection strings, schedule, SLA terms, data contract fields, environment-specific config, etc.
+    - Remember: keep the creation wizard minimal. Ask only what's strictly necessary for the first deployment. Complex or optional fields can go in the edit template.
+
+**Ask if not obvious:**
+
+**Practice Shaper context** (skip if inferred from existing templates):
+12. What practice/data landscape is configured in Witboost? (Data Mesh, Data Lake, BI, ML, custom?)
+13. What terminology does your organization use? (e.g., is it "Data Product" or something else?)
+
+**Starting point:**
+14. Do you have an existing starter kit template to customize? (from https://github.com/agile-lab-dev/witboost-starter-kit)
+
+**Edit template:**
+15. Do you also need an edit template? (Recommended — it allows users to modify the component after creation without editing YAML files directly. The edit template typically has more fields than the creation template.)
+
+If the user provides an existing template or tech adapter README, read it first and infer answers from it instead of asking redundant questions.
+
+### Step 2: Read Knowledge Base
+
+Read the relevant files from the knowledge base:
+
+1. Read [Overview](./references/overview.md) first for the overall concept
+2. Read [Template Anatomy](./references/template-anatomy.md) for the overall structure
+3. Read [Conventions](./references/conventions.md) for URN format and git provider variants
+4. Read the JSON schema for the file you're generating:
+   - Creating `template.yaml` → read [template.schema.json](./references/schemas/template.schema.json)
+   - Creating `edit-template.yaml` → read [edit-template.schema.json](./references/schemas/edit-template.schema.json)
+   - Creating `skeleton/catalog-info.yaml` → read [catalog-info.schema.json](./references/schemas/catalog-info.schema.json)
+5. Read the examples folder starting with [how-to-use.md](./references/examples/how-to-use.md), then read the matching example for the component type being built
+
+### Step 3: Generate Files
+
+Generate files in this order. **After generating, clearly summarize to the user what values were auto-generated** (URNs, repo names, field defaults) so they can verify.
+
+1. **`template.yaml`** — the creation wizard
+   - Use `apiVersion: scaffolder.backstage.io/v1beta3` and `kind: Template`
+   - Set `spec.generates` based on Practice Shaper entity types
+   - **Creation wizard = minimal.** Include the standard Witboost fields (name, description, domain, dataproduct/parentRef, identifier, owner, dependsOn, tags) plus only the additional fields the user explicitly requested. Provide sensible defaults for everything possible. Complex or optional fields belong in the edit template, not the creation wizard.
+   - **Never use `RepoUrlPicker`** unless the user explicitly asks for it. Auto-generate the repo URL using a naming convention (default: `wit-dp-<name>` for systems, `wit-cmp-<name>` for components, or the user's convention).
+   - Map all parameters to step values in the `fetch:template` step
+   - Include `useCaseTemplateId`, `infrastructureTemplateId`, `useCaseTemplateVersion` in step values
+   - Use the correct publish action for the chosen Git provider
+   - Add the `catalog:register` step
+   - **Monorepo component templates**: add hidden fields to auto-read the parent system's repo name and root directory via `EntitySelectionPicker` with `ui:property: metadata.annotations["<provider>.repo-name"]`. Build `repoUrl` from the parent's repo info. Set `targetPath` to a subdirectory like `./components/${{ parameters.name | lower }}`.
+   - **Monorepo system templates**: the system creates the repo. No need to read repo info from a parent.
+   - **Multi-repo templates**: auto-generate `repoUrl` from the naming convention. Do NOT use `RepoUrlPicker`.
+
+2. **`skeleton/catalog-info.yaml`** — the entity descriptor
+   - Use `apiVersion: backstage.io/v1alpha1`
+   - Set `kind: System` or `kind: Component` matching `spec.generates`
+   - Fill `spec.mesh` with all required fields (name, description, kind, version, URNs, dependsOn)
+   - Fill `spec.mesh.specific` with the fields expected by the tech adapter
+   - Use Nunjucks expressions referencing `values.*` — every variable must exist in the `fetch:template` step's `input.values`
+   - Handle empty arrays: `{% if values.arr | length > 0 %}...{% else %}[]{% endif %}`
+   - **Monorepo system templates**: inject the repo name and root directory into `metadata.annotations` so child component templates can discover them
+
+3. **`edit-template.yaml`** (if requested)
+   - Use `apiVersion: witboost.com/v2` and `kind: EditTemplate`
+   - Set `spec.useCaseTemplateId` to an array containing the creation template's URN
+   - **The edit template is where complexity lives.** Include all fields from the creation template plus additional fields that were too complex or unnecessary for first-time creation (schema definitions, SLA details, quality rules, environment configs, etc.)
+   - Mark non-editable fields with `ui:disabled: true`: name, domain, parent system, identifier, development group
+   - First page should be informational (explain what can/cannot be edited)
+   - **Suggest to the user** that for very complex configurations (e.g., advanced data quality expectations, complex data contracts), it may be better to edit the YAML file directly in the repository rather than building an overly complex wizard. Templates accelerate work, they don't replace an IDE.
+
+4. Remaining skeleton files: `skeleton/README.md`, `skeleton/mkdocs.yml`, `skeleton/docs/index.md`, and any other project files from the example reference project (if any)
+   - Include documentation, configuration files, and any other resources needed for the template to function correctly.
+   - For example: if the template is a DBT project, include the `dbt_project.yml` file and any necessary SQL models or macros in the `skeleton` folder. As a nice-to-have create them with Nunjucks placeholders for dynamic values. 
+
+### Step 4: Validate
+
+Run through the [Checklist](./references/checklist.md):
+
+- [ ] `apiVersion` and `kind` are correct for each file
+- [ ] `spec.generates` matches `catalog-info.yaml` `kind`
+- [ ] `spec.type` aligns with `spec.generates`
+- [ ] Every Nunjucks variable is traced end to end: skeleton → `fetch:template` step values → `parameters.yaml`
+- [ ] URNs follow the format `urn:dmb:utm:...:version` / `urn:dmb:itm:...:version`
+- [ ] `spec.mesh.specific` contains the fields expected by the tech adapter
+- [ ] `infrastructureTemplateId` matches the registered tech adapter URN
+- [ ] Publish step uses the correct action for the Git provider
+- [ ] Edit template has `ui:disabled: true` on locked fields
+- [ ] Empty arrays are handled in Nunjucks conditionals
+
+## Important Rules
+
+- **Never assume terminology.** "Data Product", "Output Port", etc. are the Data Mesh defaults. Always confirm what the customer calls these entities.
+- **`spec.mesh.specific` has no fixed schema.** The tech adapter defines it. Always ask what fields are expected.
+- **Standard fields are not optional.** Every template must include the standard Witboost fields (name, description, domain, dataproduct, identifier, owner, dependsOn, tags). Don't ask the user to choose these — they're always there. Only ask if the user needs additional fields.
+- **Creation wizard = minimal, edit template = detailed.** Keep the creation wizard as simple as possible with sensible defaults. Shift complexity to the edit template. The user can always come back and edit later.
+- **Templates are not IDEs.** Don't try to replicate a full editor experience in the wizard. For complex configurations (advanced data quality rules, detailed data contracts, complex transformations), suggest the user edit the YAML file directly in the repository. Communicate this as a recommendation, not a limitation.
+- **Never use `RepoUrlPicker`** unless explicitly requested. Auto-generate repo names using a convention (default: `wit-dp-<name>` for systems, `wit-cmp-<name>` for components) and communicate the convention to the user.
+- **Never hardcode sample data in `skeleton/parameters.yaml`.** This file is auto-generated by Witboost. The template developer only provides Nunjucks expressions: `readonly` section for components (`__system__`, `__version__`), `values` section for systems (tech-adapter config). Witboost fills the rest from the wizard and `fetch:template` step.
+- **Explain and offer to auto-generate URNs.** Users often don't know what URNs are. Explain their purpose, offer to generate them automatically, and always tell the user what was generated.
+- **Be transparent about assumptions.** Whenever you auto-generate a value (URN, repo name, field default), clearly state what you generated and why. The user must know what's automatic and what requires their input.
+- **Always ask monorepo vs multi-repo.** This fundamentally changes how `repoUrl` is constructed and whether the system template needs repo annotations.
+- **Start from starter kit when possible.** Don't reinvent the wheel — if a starter kit template exists for the target technology, use it as the base.
+- **Every Nunjucks variable must be traced end to end.** If `${{ values.foo }}` appears in the skeleton, then `foo: ${{ parameters.foo }}` must appear in the `fetch:template` step's `input.values`, and any reference to it in `skeleton/parameters.yaml` must resolve back to the same source.
+- **Validate against the checklist.** Go through every item before presenting the result to the user.

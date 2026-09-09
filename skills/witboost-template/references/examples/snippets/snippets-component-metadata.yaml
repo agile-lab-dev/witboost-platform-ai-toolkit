@@ -1,0 +1,101 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: component-basic-information.1
+  title: Any component metadata
+spec:
+  owner: agilelab
+  type: <SET YOUR ENTITY TYPE>
+  generates: <PRACTICE SHAPER COMPONENTTYPE>
+  parameters:
+    - title: Component metadata
+      description: Basic information for this component.
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Required name used for display purposes
+          ui:field: EntityNamePicker
+          default: Component Default Name
+          ui:options:
+            allowArbitraryValues: true
+        description:
+          title: Description
+          type: string
+          description: Help others understand what this component is for
+          default: Default description value
+        domain:
+          title: Domain
+          type: string
+          description: Domain of the Data Product this component belongs to
+          ui:field: EntityPicker
+          ui:options:
+            allowArbitraryValues: false
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          description: Data Product this component belongs to
+          ui:field: EntityPicker
+          ui:filter:
+            - fieldName: domain
+              entityPath: spec.domain
+          ui:options:
+            allowArbitraryValues: false
+            allowedKinds:
+              - System
+        identifier:
+          title: Identifier
+          type: string
+          description: A unique identifier for the entity inside the domain. It will not be editable after creation and is expected to be a string that is sequences of [a-zA-Z] separated by any of [-_]
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            allowArbitraryValues: false
+        developmentGroup:
+          title: Development Group
+          type: string
+          description: Data Product development group
+          ui:field: EntitySelectionPicker
+          ui:fieldName: dataproduct
+          ui:property: spec.owner
+          ui:options:
+            allowArbitraryValues: false
+        dependsOn:
+          title: Depends on
+          type: array
+          default: []
+          items:
+            type: string
+            ui:field: EntityRelationsPicker
+            ui:fieldName: dataproduct
+            relation: hasPart
+          description: A component could depend on other components
+        tags:
+          title: Component tags
+          description: Add tags to annotate your component with relevant metadata information
+          type: array
+          default: []
+          items:
+            type: string
+        domainName:
+          type: string
+          ui:field: EntitySelectionPicker
+          ui:fieldName: domain
+          ui:property: spec.mesh.name
+          ui:options:
+            allowArbitraryValues: false
+          ui:widget: hidden
+        dataproductName:
+          type: string
+          ui:field: EntitySelectionPicker
+          ui:fieldName: dataproduct
+          ui:property: spec.mesh.name
+          ui:options:
+            allowArbitraryValues: false
+          ui:widget: hidden

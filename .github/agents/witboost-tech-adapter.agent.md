@@ -1,7 +1,7 @@
 ---
 name: Witboost Tech Adapter
 description: "Create, assess, design, evolve, review, implement, or test a Witboost tech adapter."
-tools: [read, search, edit, execute, todo]
+tools: [vscode, web, read, search, edit, execute, todo]
 argument-hint: "Identify the tech adapter repository and requested lifecycle outcome."
 agents: []
 ---

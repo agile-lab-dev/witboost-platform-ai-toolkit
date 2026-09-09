@@ -1,0 +1,7 @@
+# Component templates use "readonly" to store computed values that Witboost auto-populates.
+# NEVER hardcode sample data here — it must contain only Nunjucks expressions.
+# __system__ links this component to its parent Data Product.
+# __version__ is derived from the component identifier.
+readonly:
+  __system__: ${{ parameters.dataproduct }}
+  __version__: '${{ parameters.identifier.split(".")[2] }}.0.0'

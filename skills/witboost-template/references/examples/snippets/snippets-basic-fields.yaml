@@ -1,0 +1,192 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: basic-fields-template.1
+  title: Basic Fields
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Basic fields
+      properties:
+        stringFields:
+          title: String fields
+          type: object
+          required:
+            - requiredStringField
+          properties:
+            basicStringField:
+              title: Basic String Field
+              type: string
+            defaultStringField:
+              title: Basic String Field + Default + Max Length
+              type: string
+              default: A value890
+              ui:options:
+                minLength: 3
+                maxLength: 10
+            requiredStringField:
+              title: Required field
+              type: string
+              description: This field will prevent you from going to the next section until filled
+            disabledField:
+              title: Disabled field
+              type: string
+              default: Non-editable value
+              ui:disabled: true
+            hiddenField:
+              title: Hidden field
+              type: string
+              default: I am hidden!
+              ui:widget: hidden
+            multilineField:
+              title: Multiline field
+              type: string
+              description: Text area field
+              ui:options:
+                multiline: true
+                rows: 5
+            codeStyleField:
+              title: Code-like style field
+              type: string
+              description: Usage of ui:style to give a different look to the field
+              ui:options:
+                multiline: true
+                rows: 5
+              ui:style:
+                font-family: Consolas
+                color: "#111"
+            enumField:
+              title: Closed list field
+              type: string
+              enum:
+                - Option 1
+                - Option 2
+                - Option 3
+            enumNamesField:
+              title: Closed list field with underlying values
+              type: string
+              description: You can decouple the label and the actual value saved on the form
+              enum:
+                - "1"
+                - "2"
+                - "3"
+              enumNames:
+                - Option 1
+                - Option 2
+                - Option 3
+            stringValidation:
+              title: String validation
+              type: object
+              properties:
+                emailStringField:
+                  title: String field with email validation
+                  type: string
+                  format: email
+                regexPicker:
+                  title: String field with RegEx validation (RegexPicker)
+                  type: string
+                  ui:field: RegexPicker
+                  description: Sets a regular expression and validates the input when proceeding to the next section
+                  # This field can contain the placeholder for the text area in the regex picker
+                  ui:placeholder: ''
+                  validation:
+                    errorMessage: "Error message: This field accepts only the best food"
+                    regularExpression: ^pizza$
+                    flags: i
+                urlPicker:
+                  title: String field with URL validation (UrlPicker)
+                  type: string
+                  description: Accepts only inputs which are valid URLs
+                  ui:field: UrlPicker
+                fileSystemPicker:
+                  title: String field with filesystem path validation (PathPicker)
+                  type: string
+                  description: Accepts only inputs with are valid filesystem paths, matching Linux/MacOS and Windows paths
+                  ui:field: PathPicker
+        numberFields:
+          title: Number fields
+          type: object
+          description: Number fields are a way to enforce an input to accept only integer values
+          properties:
+            numberField:
+              title: Integer field
+              type: number
+            constrainedNumberField:
+              title: Number field with constraint 0 <= x <= 10
+              type: number
+              minimum: 0
+              maximum: 10
+        booleanFields:
+          title: Boolean true/false fields
+          type: object
+          properties:
+            checkboxField:
+              title: Checkbox field
+              description: Description is not shown
+              type: boolean
+            radioField:
+              title: Radio field
+              description: If no default is set, the field will be null unless user checks and unchecks it to make it `false`
+              type: boolean
+              ui:widget: radio
+            checkboxDefaultField:
+              title: Checkbox field - Default false
+              description: By adding false as a default value, if the user doesn't checks it, its value will be set as false
+              type: boolean
+              default: false
+            selectField:
+              title: Yes/No field
+              type: boolean
+              ui:widget: select
+            selectWithNamesField:
+              title: Custom names boolean select field
+              type: boolean
+              ui:widget: select
+              oneOf:
+                - const: true
+                  title: "This is the true option"
+                - const: false
+                  title: "This is the false option"
+        dateFields:
+          title: Date fields
+          type: object
+          properties:
+            dateTimeField:
+              title: Date-time
+              type: string
+              "format": "date-time"
+            dateField:
+              title: Date
+              type: string
+              "format": "date"
+        arrayFields:
+          title: Array fields
+          type: object
+          required: [ constrainedArray ]
+          properties:
+            stringArray:
+              type: array
+              title: Free-form string array
+              items:
+                title: Basic String Field
+                type: string
+            enumStringArray:
+              type: array
+              title: Enum string array
+              uniqueItems: true
+              items:
+                title: Basic String Field
+                type: string
+                enum:
+                  - "Option A"
+                  - "Option B"
+                  - "Option C"
+            constrainedArray:
+              type: array
+              title: Constrained string array
+              minItems: 2
+              maxItems: 10
+              items:
+                title: Basic String Field
+                type: string
