@@ -1,6 +1,6 @@
 {
   "name": "@witboost/ai-toolkit",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Domain-oriented agent skills and workspace tooling for Witboost assets",
   "type": "module",
   "license": "Apache-2.0",
