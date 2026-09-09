@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://witboost.com/schemas/edit-template.schema.json",
+  "title": "Witboost Edit Template (v2)",
+  "description": "Schema for edit-template.yaml files. Edit templates define which fields of an existing entity can be modified after creation. They reference the creation template(s) they apply to via useCaseTemplateId and use 'ui:disabled: true' to lock fields that should not be changed (name, domain, parent system, identifier, development group).",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "const": "witboost.com/v2"
+    },
+    "kind": {
+      "const": "EditTemplate"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "title", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "description": "Unique identifier. Convention: 'edit-{creation-template-name}'."
+        },
+        "title": {
+          "type": "string",
+          "description": "Display name (e.g., 'Edit Snowflake Output Port')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what this edit template allows to modify."
+        },
+        "mesh": {
+          "type": "object",
+          "properties": {
+            "icon": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to the icon. Usually the same as the creation template."
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags. Convention: include 'edit' tag plus the creation template's tags."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["owner", "useCaseTemplateId", "parameters"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "description": "Owner of this edit template (group or user)."
+        },
+        "useCaseTemplateId": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^urn:dmb:utm:[a-zA-Z0-9_-]+:\\d+(\\.\\d+\\.\\d+)?$"
+          },
+          "minItems": 1,
+          "description": "Array of creation template URNs this edit template applies to. When a user edits an entity created with one of these templates, this edit form is presented."
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Array of wizard pages. Same structure as creation template parameters. Fields that must not be editable should have 'ui:disabled: true'. The first page is typically an informational page (title + description only, no properties) explaining what can and cannot be edited.",
+          "items": { "$ref": "#/$defs/editWizardPage" },
+          "minItems": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "editWizardPage": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title displayed at the top of this wizard page."
+        },
+        "description": {
+          "type": "string",
+          "description": "Help text. On the first page, typically explains what can/cannot be edited and what files require manual updates. Supports markdown."
+        },
+        "type": {
+          "type": "string",
+          "const": "object"
+        },
+        "required": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "properties": {
+          "type": "object",
+          "description": "Form field definitions. Fields with 'ui:disabled: true' are shown but not editable.",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

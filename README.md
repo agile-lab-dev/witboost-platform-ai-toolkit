@@ -10,7 +10,7 @@ The toolkit is designed to grow across independently versioned entity types with
 skills/
 ├── witboost-toolkit/       # cross-domain router
 ├── witboost-tech-adapter/  # complete domain pack
-├── witboost-template/      # reserved, intentionally incomplete
+├── witboost-template/      # complete domain pack
 └── witboost-policy/        # reserved, intentionally incomplete
 
 core/                       # shared authoring contract
@@ -87,7 +87,7 @@ Template and policy creation commands will be added only after their lifecycle c
 
 ## Optional Native Agents
 
-`.github/agents/` contains two thin Copilot wrappers: one cross-domain router and one tech-adapter entry point. They require the corresponding skills to be installed for Copilot first. Other runtimes should use their installed skills directly. Lifecycle-phase personas are intentionally not generated.
+`.github/agents/` contains three thin Copilot wrappers: one cross-domain router, one tech-adapter entry point, and one template entry point. They require the corresponding skills to be installed for Copilot first. Other runtimes should use their installed skills directly. Lifecycle-phase personas are intentionally not generated.
 
 ## Versioning
 

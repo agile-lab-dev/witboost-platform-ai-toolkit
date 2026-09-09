@@ -1,0 +1,252 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: dynamic-select-template.1
+  title: Dynamic select
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Dynamic select data
+      properties:
+        localRetrieve:
+          title: Options retrieval from local form field
+          type: object
+          properties:
+            sourceArray:
+              title: Source array
+              type: array
+              default: []
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - "Option A"
+                  - "Option B"
+                  - "Option C"
+            targetValue:
+              title: Target value
+              ui:field: DescriptorPicker
+              sourceType: field
+              source: localRetrieve
+              optionsAt: sourceArray
+            sourceObjectArray:
+              title: Schema Columns (Object Array Source)
+              type: array
+              default: []
+              ui:ArrayFieldTemplate: ArrayTableTemplate
+              items:
+                type: object
+                ui:ObjectFieldTemplate: TableRowTemplate
+                required: [ name, dataType ]
+                properties:
+                  name:
+                    type: string
+                    title: Column Name
+                  description:
+                    type: string
+                    title: Description
+                  dataType:
+                    type: string
+                    default: INT
+                    title: Column Data Type
+                    enum:
+                      - TINYINT
+                      - SMALLINT
+                      - INT
+                      - BIGINT
+                      - DOUBLE
+                      - DECIMAL
+                      - TIMESTAMP
+                      - DATE
+                      - STRING
+                      - CHAR
+                      - VARCHAR
+                      - BOOLEAN
+                      - ARRAY
+            targetObjectArrayValue:
+              title: Target value
+              ui:field: DescriptorPicker
+              sourceType: field
+              source: localRetrieve
+              optionsAt: sourceObjectArray
+              optionsDisplayNameAt: name
+
+
+        catalogRetrieve:
+          title: Simple retrieve from entity in catalog
+          type: object
+          properties: {} # We are not wrapping other properties as this conflicts with the pickers. See the examples explanation for more information
+
+        domain:
+          title: Domain
+          type: string
+          description: the domain this output port belongs to
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          description: Data Product source
+          ui:field: EntityPicker
+          ui:filter:
+            - fieldName: domain
+              entityPath: spec.domain
+          ui:options:
+            allowedKinds:
+              - System
+
+        hiddenDomain:
+          type: string
+          default: "domain:distribution"
+          ui:widget: hidden
+        filteredDataProduct:
+          title: Data Product + Hidden filter
+          type: string
+          description: Data Product source + Hidden filter
+          ui:field: EntityPicker
+          ui:filter:
+            - fieldName: hiddenDomain
+              entityPath: spec.domain
+          ui:options:
+            allowedKinds:
+              - System
+
+        dataProductOwnerFiltered:
+          title: Data Product Owner
+          ui:widget: hidden
+          type: string
+          description: User who owns the Data Product
+          ui:field: EntityPicker
+          ui:options:
+            showOnlyUserOwnGroups: true
+            allowArbitraryValues: false
+            allowedKinds:
+              - User
+
+        dataProductComponents:
+          title: Choose a component
+          type: string
+          ui:field: EntityRelationsPicker
+          ui:fieldName: dataproduct
+          relation: hasPart
+        dataProductStorages:
+          title: Choose a storage
+          type: string
+          ui:field: EntityRelationsPicker
+          ui:fieldName: dataproduct
+          relation: hasPart
+          ui:filters:
+            - key: spec.type
+              value: storage
+
+        user:
+          title: Data Product Owner
+          description: Select a member of the domain's owner group as Data Product owner
+          type: string
+          ui:field: EntityRelationsPicker
+          ui:fieldName: domain
+          ui:property: spec.owner
+          relation: hasMember
+          returnFormat: ref
+
+        readsFromComponent:
+          title: Reads-from picker
+          type: string
+          ui:field: ReadsFromPicker
+
+        identitiesSection:
+          title: Identities
+          type: object
+          properties:
+            identities:
+              title: Source entity
+              type: array
+              description: "Choose some identities from the catalog"
+              ui:field: IdentitiesPicker
+              ui:options:
+                maxIdentities: 5
+                allowedKinds:
+                  - User
+                showOnlyUserMemberGroups: true
+            roleId:
+              type: string
+              title: Role
+              ui:field: RbacRolePicker
+              ui:options:
+                allowArbitraryValues: false
+
+        complexExamples:
+          title: Complex examples - Tables from storage
+          type: object
+          properties: { }
+
+        hiddenKind:
+          type: string
+          default: storage
+          ui:widget: hidden
+          ui:disabled: true
+        underlyingStorage:
+          title: Storage Area
+          type: object
+          ui:field: EntityPicker
+          ui:fieldName: dataproduct
+          ui:options:
+            allowArbitraryValues: false
+            storeRawEntity: true # this is the key property that does the magic
+            allowedKinds:
+              - Component
+          ui:filter:
+            - fieldName: dataproduct
+              entityPath: spec.system
+            - fieldName: hiddenKind
+              entityPath: spec.type
+          description: Required. An Output Port has to get data from a Storage Area in the same Data Product.
+        tableName:
+          type: object
+          ui:field: DescriptorPicker
+          ui:options:
+            allowArbitraryValues: false
+          title: Table Name
+          description: Required. Choose a table from the ones defined by the Storage Area above. This is where the Output Port view will get its data from.
+          sourceType: field
+          source: underlyingStorage
+          optionsAt: spec.mesh.specific.tables
+          optionsDisplayNameAt: tableName
+
+        externalSource:
+          title: External Source (API)
+          type: object
+          properties:
+            businessTerms:
+              title: Catalog Business Terms
+              type: array
+              description: A field implementing Custom URL picker retrieving business terms from a catalog glossary
+              ui:field: CustomUrlPicker
+              ui:options:
+                maxNumberToSelect: 3 # Since type is `array`, we can define the max number of values user can select
+                allowArbitraryValues: true
+                selectedField: name # From the return body of the items, which value to show on the chip text
+              ui:fieldsToSave: # Subset of fields to store from the item body
+                - id
+                - name
+                - description
+              ui:displayFields: # Subset of fields to show on the options list
+                - id
+                - name
+              ui:apiSpec:
+                retrieval:
+                  microserviceId: 'mocked-microservice-id'
+                  baseUrl: http://url.com # OPTIONAL
+                  path: /some/path/retrieve # OPTIONAL
+                  method: POST # OPTIONAL
+                  params:
+                    areaType: 'marketing'
+                    domain: ${{ domain }} # Retrieves the domain field value
+                validation:
+                  microserviceId: 'mocked-microservice-id'
+                  baseUrl: http://url.com # OPTIONAL
+                  path: /some/path/validation # OPTIONAL
+                  method: POST # OPTIONAL

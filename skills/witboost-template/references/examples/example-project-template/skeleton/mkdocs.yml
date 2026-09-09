@@ -1,0 +1,9 @@
+site_name: ${{ values.name | dump }} - Developer Documentation
+site_description: ${{ values.description | dump }}
+
+nav:
+  - Data Product Documentation: index.md
+
+plugins:
+  - techdocs-core
+  

@@ -1,0 +1,156 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: conditional-fields-template.1
+  title: Conditional Fields
+spec:
+  owner: agilelab
+  type: template
+  parameters:
+    - title: Conditional fields
+      properties:
+        schedulingExample:
+          title: Scheduling example
+          type: object
+          properties:
+            enableScheduling:
+              type: boolean
+              title: Enable scheduling
+              default: false
+          allOf:
+            - if:
+                properties: # We setup the properties values this condition needs to satisfy
+                  enableScheduling:
+                    const: true # Use the `const` keyword to configure the condition value
+              then: # All the properties inside the `then` will be shown when the condition is true
+                properties:
+                  cronExpression:
+                    title: Cron expression
+                    type: string
+                  startDate:
+                    title: Start Date
+                    type: string
+                    format: date-time
+                  endDate:
+                    title: End Date
+                    type: string
+                    format: date-time
+                required:
+                  - cronExpression
+                  - startDate
+                  - endDate
+        tableExample:
+          title: Column schema minimal example
+          type: object
+          required:
+            - name
+            - dataType
+          properties:
+            name:
+              type: string
+              title: Name
+            dataType:
+              type: string
+              default: INT
+              title: Data Type
+              enum:
+                - INT
+                - STRING
+                - VARCHAR
+                - CHAR
+                - DECIMAL
+          allOf:
+            - if:
+                properties:
+                  dataType:
+                    oneOf:
+                      - const: VARCHAR
+                      - const: CHAR
+              then:
+                properties:
+                  dataLength:
+                    title: Column Length
+                    type: integer
+                    default: 65535
+                required:
+                  - dataLength
+            - if:
+                properties:
+                  dataType:
+                    oneOf:
+                      - const: DECIMAL
+              then:
+                properties:
+                  precision:
+                    title: Precision
+                    type: integer
+                    default: 38
+                  scale:
+                    title: Scale
+                    type: integer
+                    default: 0
+                required:
+                  - precision
+                  - scale
+        businessDomain:
+          title: Business Domain
+          type: object
+          properties:
+            businessDomainMenu:
+              title: Business Domain
+              description: Add the business domains that this component impacts
+              uniqueItems: true
+              type: array
+              default: []
+              items:
+                type: string
+                enum:
+                  - Finance
+                  - Marketing
+                  - IT
+                  - Sales
+                  - Design
+                  - Other
+          allOf:
+            - if:
+                properties: # We setup the properties values this condition needs to satisfy
+                  businessDomainMenu:
+                    contains: # Use the `contains` keyword to check the existence of Other in the specified array
+                      const: Other
+              then: # All the properties inside the `then` will be shown when the condition is true
+                properties:
+                  otherBusinessDomain:
+                    title: Other Business Domain
+                    type: string
+                    description: Fill this with the other business domain this component impacts
+                required:
+                  - otherBusinessDomain
+        dependenciesSchedulingExample:
+          title: Scheduling Example - Dependencies+oneOf Strategy
+          type: object
+          properties:
+            enableScheduling:
+              type: boolean
+              title: Enable scheduling
+              default: false
+          dependencies:
+            enableScheduling:
+              oneOf:
+                - properties:
+                    enableScheduling:
+                      const: true
+                    cronExpression:
+                      title: Cron expression
+                      type: string
+                    startDate:
+                      title: Start Date
+                      type: string
+                      format: date-time
+                    endDate:
+                      title: End Date
+                      type: string
+                      format: date-time
+                  required:
+                    - cronExpression
+                    - startDate
+                    - endDate

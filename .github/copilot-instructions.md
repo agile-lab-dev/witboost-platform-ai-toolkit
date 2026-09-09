@@ -6,6 +6,6 @@ This repository publishes domain-oriented Agent Skills and a separate workspace 
 
 - Edit canonical skills under `skills/` and keep them self-contained.
 - Treat `core/` as an authoring contract, not a runtime dependency.
-- Keep template and policy packs explicitly incomplete until their contracts are designed.
+- Keep the policy pack explicitly incomplete until its contract is designed.
 - Keep optional native agents as thin wrappers around one skill.
 - Run `make validate` after changing skills or CLI behavior.

@@ -34,7 +34,7 @@ describe("domain skills", () => {
   });
 
   it("keeps future domains internal until their playbooks exist", () => {
-    for (const skill of ["witboost-template", "witboost-policy"]) {
+    for (const skill of ["witboost-policy"]) {
       const raw = readFileSync(resolve(skillsRoot, skill, "SKILL.md"), "utf8");
       const metadata = parseYaml(raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "") as {
         metadata?: { internal?: boolean };
@@ -66,6 +66,28 @@ describe("domain skills", () => {
       "test",
     ]) {
       expect(existsSync(resolve(skillRoot, `references/playbooks/${playbook}.md`))).toBe(true);
+    }
+  });
+
+  it("keeps the template pack complete", () => {
+    const skillRoot = resolve(skillsRoot, "witboost-template");
+    for (const reference of [
+      "overview",
+      "template-anatomy",
+      "template-fields",
+      "manifest-schema",
+      "conventions",
+      "checklist",
+    ]) {
+      expect(existsSync(resolve(skillRoot, `references/${reference}.md`))).toBe(true);
+    }
+    for (const schema of [
+      "template.schema.json",
+      "edit-template.schema.json",
+      "catalog-info.schema.json",
+      "parameters.schema.json",
+    ]) {
+      expect(existsSync(resolve(skillRoot, `references/schemas/${schema}`))).toBe(true);
     }
   });
 });

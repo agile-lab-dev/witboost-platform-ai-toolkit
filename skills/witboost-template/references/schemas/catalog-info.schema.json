@@ -1,0 +1,276 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://witboost.com/schemas/catalog-info.schema.json",
+  "title": "Witboost Catalog Info (Skeleton)",
+  "description": "Schema for skeleton/catalog-info.yaml files. These are Nunjucks templates rendered during template execution that produce the entity descriptor registered in the Witboost catalog. Witboost assembles the rendered descriptor (flattening all spec.mesh.* fields to root level) and sends it to the tech adapter for validation and provisioning. The 'specific' section is entirely defined by the tech adapter — there is no fixed schema for it.",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "const": "backstage.io/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["System", "Component"]
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "spec": {
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/systemEntity" },
+    { "$ref": "#/$defs/componentEntity" }
+  ],
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique entity identifier. In skeletons, typically a Nunjucks expression: ${{ values.identifier }}"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description. In skeletons: ${{ values.description | dump }}"
+        },
+        "version": {
+          "type": "string",
+          "description": "Entity version string."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Key-value annotations. Common keys: 'backstage.io/techdocs-ref' (usually 'dir:.'), git provider slug (e.g., 'gitlab.com/project-slug', 'dev.azure.com/repo-name', 'dev.azure.com/root-directory', 'github.com/project-slug').",
+          "additionalProperties": { "type": "string" }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "systemEntity": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "System" },
+        "spec": {
+          "type": "object",
+          "required": ["type", "lifecycle", "owner", "domain", "mesh"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "System type as defined in Practice Shaper. Default Data Mesh practice: 'dataproduct'. Custom practices may use different names (e.g., 'biproject', 'mlexperiment')."
+            },
+            "lifecycle": {
+              "type": "string",
+              "default": "experimental"
+            },
+            "owner": {
+              "type": "string",
+              "description": "Owner group/user reference (e.g., 'group:datameshplatform')."
+            },
+            "domain": {
+              "type": "string",
+              "description": "Domain reference (e.g., 'domain:finance')."
+            },
+            "mesh": { "$ref": "#/$defs/systemMesh" }
+          }
+        }
+      }
+    },
+    "componentEntity": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "Component" },
+        "spec": {
+          "type": "object",
+          "required": ["type", "lifecycle", "owner", "system", "domain", "mesh"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Component type: 'outputport', 'workload', 'storage', or custom types from Practice Shaper."
+            },
+            "lifecycle": {
+              "type": "string",
+              "default": "experimental"
+            },
+            "owner": {
+              "type": "string",
+              "description": "Owner group/user reference."
+            },
+            "system": {
+              "type": "string",
+              "description": "Parent system reference (e.g., '${{ values.dataproduct }}')."
+            },
+            "domain": {
+              "type": "string",
+              "description": "Domain reference."
+            },
+            "mesh": { "$ref": "#/$defs/componentMesh" }
+          }
+        }
+      }
+    },
+    "systemMesh": {
+      "type": "object",
+      "required": ["name", "version"],
+      "description": "Witboost-specific metadata for system entities. All fields here are flattened to root level in the assembled descriptor sent to the tech adapter.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the system."
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version (e.g., '1.0.0')."
+        },
+        "description": { "type": "string" },
+        "fullyQualifiedName": {
+          "type": "string",
+          "description": "Full display name including domain and version context."
+        },
+        "useCaseTemplateId": {
+          "type": "string",
+          "pattern": "^urn:dmb:utm:[a-zA-Z0-9_-]+:\\d+(\\.\\d+\\.\\d+)?$",
+          "description": "URN of the use case template that created this system."
+        },
+        "infrastructureTemplateId": {
+          "type": "string",
+          "pattern": "^urn:dmb:itm:[a-zA-Z0-9_-]+:\\d+(\\.\\d+\\.\\d+)?$",
+          "description": "URN of the tech adapter that provisions this system."
+        },
+        "tags": { "$ref": "#/$defs/tagArray" }
+      },
+      "additionalProperties": true
+    },
+    "componentMesh": {
+      "type": "object",
+      "required": ["name", "description", "kind", "version", "infrastructureTemplateId", "useCaseTemplateId"],
+      "description": "Witboost-specific metadata for component entities. All fields here are flattened to root level in the assembled descriptor sent to the tech adapter.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the component."
+        },
+        "description": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "description": "Component kind: 'outputport', 'workload', 'storage', or custom. Must match spec.type."
+        },
+        "version": {
+          "type": "string",
+          "description": "Component version (e.g., '1.0.0')."
+        },
+        "fullyQualifiedName": {
+          "type": "string",
+          "description": "Full display name (e.g., 'Finance - CashFlow - version 1 - My Output Port')."
+        },
+        "infrastructureTemplateId": {
+          "type": "string",
+          "pattern": "^urn:dmb:itm:[a-zA-Z0-9_-]+:\\d+(\\.\\d+\\.\\d+)?$",
+          "description": "URN of the tech adapter that provisions this component. This determines what fields are expected in the 'specific' section."
+        },
+        "useCaseTemplateId": {
+          "type": "string",
+          "pattern": "^urn:dmb:utm:[a-zA-Z0-9_-]+:\\d+(\\.\\d+\\.\\d+)?$",
+          "description": "URN of the use case template that created this component."
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of component URNs this component depends on (same system only)."
+        },
+        "platform": {
+          "type": "string",
+          "description": "Technology platform (e.g., 'Snowflake', 'AWS', 'Azure', 'Databricks')."
+        },
+        "technology": {
+          "type": "string",
+          "description": "Specific technology used (e.g., 'Snowflake', 'S3', 'Spark', 'Impala')."
+        },
+        "outputPortType": {
+          "type": "string",
+          "description": "For outputport kind only. Access type: 'SQL', 'Files', 'Streaming'."
+        },
+        "consumable": {
+          "type": "boolean",
+          "description": "Whether this component can be consumed via the marketplace."
+        },
+        "shoppable": {
+          "type": "boolean",
+          "description": "Whether this component appears in the marketplace for subscription."
+        },
+        "readsFrom": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Component/resource URNs this component reads from (can cross system boundaries)."
+        },
+        "dataContract": {
+          "type": "object",
+          "description": "Data contract definition (schema, SLA, quality rules). Structure depends on the standard used (e.g., BITOL).",
+          "additionalProperties": true
+        },
+        "dataSharingAgreement": {
+          "type": "object",
+          "description": "Data sharing agreement terms (purpose, billing, security, usage, limitations, lifecycle, confidentiality).",
+          "properties": {
+            "purpose": { "type": "string" },
+            "billing": { "type": "string" },
+            "security": { "type": "string" },
+            "intendedUsage": { "type": "string" },
+            "limitations": { "type": "string" },
+            "lifeCycle": { "type": "string" },
+            "confidentiality": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "tags": { "$ref": "#/$defs/tagArray" },
+        "specific": {
+          "type": "object",
+          "description": "Tech-adapter-specific fields. The structure of this section is entirely defined by the tech adapter that provisions this component — there is no fixed schema. Consult the tech adapter's documentation or README to determine the required fields. Example for a Snowflake output port: { viewName, tableName, database, schema }. Example for an S3 storage: { bucketName, region, path }.",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "tagArray": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tagFQN", "source"],
+        "properties": {
+          "tagFQN": {
+            "type": "string",
+            "description": "Fully qualified tag name."
+          },
+          "source": {
+            "type": "string",
+            "enum": ["Tag", "Glossary"],
+            "description": "'Tag' for classification tags, 'Glossary' for business term tags."
+          },
+          "labelType": {
+            "type": "string",
+            "default": "Manual"
+          },
+          "state": {
+            "type": "string",
+            "default": "Confirmed"
+          }
+        }
+      }
+    }
+  }
+}

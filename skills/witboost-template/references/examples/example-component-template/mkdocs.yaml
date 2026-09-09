@@ -1,0 +1,8 @@
+site_name: "Component Template"
+site_description: "Create a Component to add functionality to a Data Product."
+
+nav:
+  - Template Usage: index.md
+
+plugins:
+  - techdocs-core
