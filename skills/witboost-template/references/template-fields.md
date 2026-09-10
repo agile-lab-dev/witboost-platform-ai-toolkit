@@ -2,7 +2,7 @@
 
 The `spec.parameters` section in `template.yaml` defines the wizard form using JSON Schema. Each element in the array is one wizard page. Within each page, `properties` contains the field definitions. The form engine renders fields automatically based on their JSON Schema type, with UI customization available via `ui:*` directives.
 
-In addition to standard widgets, Witboost provides custom pickers (`ui:field`) for entity selection, identifier generation, and more. Custom pickers are documented separately — this file covers the standard field types, layouts, conditionals, and UI directives.
+In addition to standard widgets, Witboost provides custom pickers (`ui:field`) for entity selection, identifier generation, and more. Custom pickers are documented separately in [pickers.json](./pickers.json) — this file covers the standard field types, layouts, conditionals, and UI directives.
 
 ## Field Types and Default Rendering
 

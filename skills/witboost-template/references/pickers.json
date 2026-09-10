@@ -1,0 +1,463 @@
+{
+  "$description": "Reference catalog of every custom Scaffolder field extension (\"picker\") exposed by Witboost's wizard engine (witboost.mesh.ui, plugins/wb-scaffolder). Used via `ui:field: <name>` on a JSON Schema property inside template.yaml / edit-template.yaml. Sourced by reading plugins/wb-scaffolder/src/extensions/default.ts (the registration list) and each picker's component + schema.ts in witboost.mesh.ui.",
+  "commonStructure": {
+    "name": "The canonical component name (may back more than one registeredName).",
+    "registeredNames": "Every string value valid for `ui:field: <value>` that resolves to this component.",
+    "category": "Rough grouping to help pick the right picker for a use case.",
+    "purpose": "What the picker is for and when to use it.",
+    "sourceFile": "Path of the component, relative to the witboost.mesh.ui repo root, for citation purposes.",
+    "jsonSchemaType": "The JSON Schema `type` (and shape) the property must declare for this picker's output value.",
+    "uiOptions": "Array of options read from `uiSchema['ui:options']`. Each entry: {name, type, required, default, description}.",
+    "otherUiDirectives": "Array of other `ui:*` keys (siblings of `ui:field`, NOT inside `ui:options`) this picker reads, e.g. `ui:filter`, `ui:fieldName`, `ui:property`. Each entry: {name, required, default, description}.",
+    "fieldLevelConfig": "Dedicated field for configuration keys that live directly on the property definition itself (siblings of `type`/`ui:field`, at the SAME level as `title`/`description`) rather than under `ui:options` or as a `ui:*` directive. Empty array if the picker has none. Each entry: {name, required, default, description}.",
+    "validation": "Description of built-in validation behavior, if any.",
+    "async": "Whether the picker performs asynchronous work (catalog/API calls) to render options or validate.",
+    "example": "Minimal YAML snippet of the property definition showing typical usage."
+  },
+  "pickers": [
+    {
+      "name": "EntityPicker",
+      "registeredNames": ["EntityPicker"],
+      "category": "entity-selection",
+      "purpose": "Selects a single entity from the Witboost/Backstage catalog (e.g. a Domain, System, Group or User), with autocomplete search and, by default, the ability to type an arbitrary value not present in the catalog.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntityPicker/EntityPicker.tsx",
+      "jsonSchemaType": "string (entity reference), or the raw Entity object when uiOptions.storeRawEntity is true",
+      "uiOptions": [
+        { "name": "allowedKinds", "type": "string[]", "required": false, "default": null, "description": "DEPRECATED, use catalogFilter instead. Restricts selectable entities to these catalog kinds (e.g. Domain, System, Group, User)." },
+        { "name": "defaultKind", "type": "string", "required": false, "default": null, "description": "Entity kind assumed by default; options of this kind are rendered without a kind prefix." },
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "Whether to allow typing a value that is not present in the catalog." },
+        { "name": "defaultNamespace", "type": "string | false", "required": false, "default": null, "description": "Default namespace; options in this namespace are rendered without a namespace prefix." },
+        { "name": "catalogFilter", "type": "object | object[]", "required": false, "default": null, "description": "Key/value catalog filter expression(s), e.g. { kind: Domain }. Preferred replacement for allowedKinds." },
+        { "name": "excludeValues", "type": "string[]", "required": false, "default": null, "description": "Entity references to exclude from the option list." },
+        { "name": "showOnlyUserOwnGroups", "type": "boolean", "required": false, "default": false, "description": "Show only the Group entities the logged-in user belongs to (requires allowedKinds/catalogFilter to include user/group)." },
+        { "name": "storeRawEntity", "type": "boolean", "required": false, "default": false, "description": "Store the full Entity object in the form data instead of just its entity ref. Used together with DescriptorPicker to let the user drill into the selected entity's spec." },
+        { "name": "ui:widget", "type": "string", "required": false, "default": null, "description": "Overrides the rendered widget." }
+      ],
+      "otherUiDirectives": [
+        { "name": "ui:filter", "required": false, "default": null, "description": "Array of { fieldName, entityPath } pairs. Filters catalog results to entities whose property at entityPath equals the current value of the sibling form field named fieldName. Used to cascade selections, e.g. filter Systems by the Domain chosen in another field." }
+      ],
+      "fieldLevelConfig": [],
+      "validation": "None client-side beyond the configured filters; the catalog is the source of truth for valid values.",
+      "async": true,
+      "example": "domain:\n  title: Domain\n  type: string\n  description: Domain this component belongs to\n  ui:field: EntityPicker\n  ui:options:\n    allowArbitraryValues: false\n    allowedKinds:\n      - Domain\n"
+    },
+    {
+      "name": "EntityNamePicker",
+      "registeredNames": ["EntityNamePicker"],
+      "category": "identifier",
+      "purpose": "Free-text input for the display name of a new component or project. Integrates with the wizard's dependency manager so that dependent fields (e.g. auto-generated identifiers) recompute live when the name changes.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntityNamePicker/EntityNamePicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [
+        { "name": "maxLength", "type": "number", "required": false, "default": null, "description": "Maximum allowed string length." },
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "If false, disables manual editing of the field." }
+      ],
+      "otherUiDirectives": [
+        { "name": "ui:autofocus", "required": false, "default": null, "description": "Auto-focuses the input when the step is shown." }
+      ],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": false,
+      "example": "name:\n  title: Name\n  type: string\n  description: Display name of the Component.\n  ui:field: EntityNamePicker\n  default: My Component\n  ui:options:\n    allowArbitraryValues: true\n"
+    },
+    {
+      "name": "OwnerPicker",
+      "registeredNames": ["OwnerPicker"],
+      "category": "entity-selection",
+      "purpose": "Specialized EntityPicker preset for choosing an owner: defaults allowedKinds to Group and User.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/OwnerPicker/OwnerPicker.tsx",
+      "jsonSchemaType": "string (entity reference), or the raw Entity object",
+      "uiOptions": [
+        { "name": "allowedKinds", "type": "string[]", "required": false, "default": ["Group", "User"], "description": "DEPRECATED, use catalogFilter instead. Kinds of entities to derive options from." },
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "Whether to allow arbitrary user input." },
+        { "name": "defaultNamespace", "type": "string | false", "required": false, "default": null, "description": "The default namespace; options with this namespace are not prefixed." },
+        { "name": "catalogFilter", "type": "object | object[]", "required": false, "default": null, "description": "Key/value filter expression(s) for entities." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None.",
+      "async": true,
+      "example": "owner:\n  title: Owner\n  type: string\n  ui:field: OwnerPicker\n"
+    },
+    {
+      "name": "OwnedEntityPicker",
+      "registeredNames": ["OwnedEntityPicker"],
+      "category": "entity-selection",
+      "purpose": "Like EntityPicker, but restricted to entities owned by (or related to) the current logged-in user.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/OwnedEntityPicker/OwnedEntityPicker.tsx",
+      "jsonSchemaType": "string (entity reference)",
+      "uiOptions": [
+        { "name": "allowedKinds", "type": "string[]", "required": false, "default": null, "description": "Entity kinds to show." },
+        { "name": "defaultKind", "type": "string", "required": false, "default": null, "description": "Default kind for display." },
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "Allow custom values." },
+        { "name": "defaultNamespace", "type": "string | false", "required": false, "default": null, "description": "Default namespace for display." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None.",
+      "async": true,
+      "example": "myProjects:\n  title: My Projects\n  type: string\n  ui:field: OwnedEntityPicker\n  ui:options:\n    allowedKinds: [System]\n"
+    },
+    {
+      "name": "EntitySelectionPicker",
+      "registeredNames": ["EntitySelectionPicker"],
+      "category": "entity-selection",
+      "purpose": "Reads the value of another field (typically an entity ref chosen via EntityPicker) and copies a nested property from the resolved entity/entities into this field. Used to auto-populate computed or read-only fields, e.g. an owner or a repo-name annotation pulled from a previously selected Data Product.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntitySelectionPicker/EntitySelectionPicker.tsx",
+      "jsonSchemaType": "string (or array, depending on the source field's cardinality)",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": false, "description": "Whether to allow arbitrary user input. Only takes effect if the field's JSON Schema type is 'string'." }
+      ],
+      "otherUiDirectives": [
+        { "name": "ui:fieldName", "required": true, "default": null, "description": "Name of the source form field holding the entity ref(s) to resolve." },
+        { "name": "ui:property", "required": false, "default": null, "description": "Lodash path into the resolved entity/entities used to compute this field's value. Mutually exclusive with mapTo." },
+        { "name": "mapTo", "required": false, "default": null, "description": "Alternative to ui:property: an object (or '.') mapping multiple properties of the resolved entity into an object value. Mutually exclusive with ui:property." },
+        { "name": "ui:displayLabel", "required": false, "default": null, "description": "Lodash path used to compute the human-readable label shown for the resolved value." }
+      ],
+      "fieldLevelConfig": [],
+      "validation": "Configuration is Zod-validated: exactly one of ui:property or mapTo must be set, otherwise the field is disabled with an error message.",
+      "async": true,
+      "example": "owner:\n  title: Component Owner\n  type: string\n  description: Automatically selected from the Data Product metadata.\n  ui:field: EntitySelectionPicker\n  ui:fieldName: dataproduct\n  ui:property: spec.owner\n  ui:options:\n    allowArbitraryValues: false\n"
+    },
+    {
+      "name": "EntityRelationsPicker",
+      "registeredNames": ["EntityRelationsPicker", "EntityComponentsPicker"],
+      "category": "entity-selection",
+      "purpose": "Selects entities related to another entity (identified via ui:fieldName) by following a catalog relation (default hasPart). Registered a second time as EntityComponentsPicker, the conventional name used to pick sibling Components belonging to the same Data Product (System), e.g. for a `dependsOn` field.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntityRelationsPicker/EntityRelationsPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "Whether to allow arbitrary user input." },
+        { "name": "ui:widget", "type": "string", "required": false, "default": null, "description": "The widget to use for the field." }
+      ],
+      "otherUiDirectives": [
+        { "name": "ui:fieldName", "required": true, "default": null, "description": "Name of the sibling field holding the source entity ref used as the relation's starting point." },
+        { "name": "ui:property", "required": false, "default": null, "description": "Optional lodash path resolved on the source entity BEFORE following the relation, when the actual reference entity is nested under a property." },
+        { "name": "ui:componentsFilter", "required": false, "default": null, "description": "Keeps only related entities whose spec.type equals this value." },
+        { "name": "ui:filters", "required": false, "default": null, "description": "Array of { key, value }: keeps only related entities where the property at lodash path `key` equals `value`." }
+      ],
+      "fieldLevelConfig": [
+        { "name": "returnFormat", "type": "'urn' | 'ref'", "required": false, "default": "urn", "description": "Format of each selected value: 'urn' builds a Witboost URN from the entity's kind + name; 'ref' produces a stringified catalog entityRef." },
+        { "name": "relation", "type": "string", "required": false, "default": "hasPart", "description": "Catalog relation type to traverse from the source entity to find candidate related entities." }
+      ],
+      "validation": "Configuration is Zod-validated against the schema above.",
+      "async": true,
+      "example": "dependsOn:\n  title: Depends on\n  type: array\n  default: []\n  items:\n    type: string\n    ui:field: EntityComponentsPicker\n    ui:fieldName: dataproduct\n    ui:options:\n      allowArbitraryValues: false\n"
+    },
+    {
+      "name": "EntitySearchPicker",
+      "registeredNames": ["EntitySearchPicker"],
+      "category": "entity-selection",
+      "purpose": "Advanced full-text/knowledge-graph entity search, with optional multi-selection and Witty AI-assisted suggestions. Broader and less filterable than EntityPicker; use it for free-form search-driven entity pickers.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntitySearchPicker/EntitySearchPicker.tsx",
+      "jsonSchemaType": "string | GenericEntityType, or an array of those when multiSelection is true",
+      "uiOptions": [
+        { "name": "multiSelection", "type": "boolean", "required": false, "default": false, "description": "Allow selecting multiple entities." },
+        { "name": "entities", "type": "TemplateEntity[]", "required": false, "default": null, "description": "Configuration of which entity types/filters are searchable and how they are displayed." },
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": false, "description": "Allow arbitrary values not found by search." },
+        { "name": "ui:widget", "type": "string", "required": false, "default": null, "description": "Overrides the rendered widget." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": true,
+      "example": "relatedResource:\n  title: Related Resource\n  type: string\n  ui:field: EntitySearchPicker\n"
+    },
+    {
+      "name": "ReadsFromPicker",
+      "registeredNames": ["ReadsFromPicker"],
+      "category": "entity-selection",
+      "purpose": "Composite picker for choosing a data source to consume from: lets the user cascade Domain -> Data Product -> Output Port, or alternatively pick a generic Resource directly, via catalog-backed dropdowns.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/ReadsFromPicker/ReadsFromPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": true,
+      "example": "readsFrom:\n  title: Reads From\n  type: string\n  ui:field: ReadsFromPicker\n"
+    },
+    {
+      "name": "IdentifierPicker",
+      "registeredNames": ["IdentifierPicker"],
+      "category": "identifier",
+      "purpose": "Auto-generates a Witboost project/system identifier by combining the values of a domain field and a name field elsewhere in the same form, recomputing live as those fields change. Used for Project/System templates (not Components — see ComponentIdentifierPicker).",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/IdentifierPicker/IdentifierPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "If false, the field is fully disabled for manual editing (auto-generated value only)." },
+        { "name": "domainField", "type": "string", "required": false, "default": "domain", "description": "Name of the sibling field holding the domain value used to compute the identifier." },
+        { "name": "nameField", "type": "string", "required": false, "default": "name", "description": "Name of the sibling field holding the name value used to compute the identifier." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Async — checks the generated identifier's uniqueness against Witboost.",
+      "async": true,
+      "example": "identifier:\n  title: Identifier\n  type: string\n  description: Autogenerated unique identifier.\n  ui:field: IdentifierPicker\n  ui:options:\n    allowArbitraryValues: false\n"
+    },
+    {
+      "name": "ComponentIdentifierPicker",
+      "registeredNames": ["ComponentIdentifierPicker"],
+      "category": "identifier",
+      "purpose": "Like IdentifierPicker, but for Components: auto-generates the identifier from a 'name' field and the component's parent, read from a 'parentRef' field if present, otherwise from a 'dataproduct' field. Always use this (not IdentifierPicker) for Component templates.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/ComponentIdentifierPicker/ComponentIdentifierPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "If false, disables manual editing of the auto-generated value." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Async — component-specific identifier uniqueness check.",
+      "async": true,
+      "example": "identifier:\n  title: Identifier\n  type: string\n  description: Autogenerated unique identifier. Not editable after creation.\n  ui:field: ComponentIdentifierPicker\n  ui:options:\n    allowArbitraryValues: false\n"
+    },
+    {
+      "name": "RepoUrlPicker",
+      "registeredNames": ["RepoUrlPicker"],
+      "category": "repository",
+      "purpose": "Structured repository picker: lets the user compose a Git repository location (host, owner/namespace, repo name) across GitHub, GitLab, Bitbucket, Azure Repos or Gerrit, with optional per-provider OAuth scope requests. Witboost convention is to auto-generate repoUrl from a naming convention instead of exposing this picker to end users — only use it if the user explicitly wants to pick the repo location manually.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/RepoUrlPicker/RepoUrlPicker.tsx",
+      "jsonSchemaType": "string (SCM query-string URL, e.g. github.com?owner=org&repo=name)",
+      "uiOptions": [
+        { "name": "schema", "type": "object", "required": false, "default": null, "description": "Labels/placeholders overrides: namespaceTitle, namespaceDescription, namespacePlaceholder, repositoryNameTitle, repositoryNameDescription, repositoryNamePlaceholder." },
+        { "name": "allowedHosts", "type": "string[]", "required": false, "default": null, "description": "Restricts selectable Git hosts, e.g. ['gitlab.com']." },
+        { "name": "allowedOrganizations", "type": "string[]", "required": false, "default": null, "description": "Restricts selectable orgs/namespaces." },
+        { "name": "allowedOwners", "type": "string[]", "required": false, "default": null, "description": "Restricts selectable owners." },
+        { "name": "allowedRepos", "type": "string[]", "required": false, "default": null, "description": "Restricts selectable repository names." },
+        { "name": "requestUserCredentials", "type": "object", "required": false, "default": null, "description": "Requests an OAuth token with additional scopes. Shape: { secretsKey (string, required): key under which the token is stored for later steps; additionalScopes (object, optional): per-provider extra scopes for gerrit/github/gitlab/bitbucket/azure (string[] each) }." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "repoPickerValidation checks the composed URL is well-formed and its host matches an allowed/known SCM provider.",
+      "async": false,
+      "example": "repoUrl:\n  title: Repository Location\n  type: string\n  ui:field: RepoUrlPicker\n  ui:options:\n    allowedHosts:\n      - gitlab.com\n"
+    },
+    {
+      "name": "EntityTagsPicker",
+      "registeredNames": ["EntityTagsPicker"],
+      "category": "tags-and-metadata",
+      "purpose": "Multi-select tag input backed by the catalog's existing tag list, with tag-format validation.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/EntityTagsPicker/EntityTagsPicker.tsx",
+      "jsonSchemaType": "array of strings",
+      "uiOptions": [
+        { "name": "kinds", "type": "string[]", "required": false, "default": null, "description": "Restrict suggested tags to those used by entities of these catalog kinds." },
+        { "name": "showCounts", "type": "boolean", "required": false, "default": false, "description": "Show usage counts next to each suggested tag." },
+        { "name": "helperText", "type": "string", "required": false, "default": null, "description": "Custom helper text describing the expected tag format." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Each tag must match the catalog tag format (lowercase alphanumeric segments separated by '-', '+' or '#', max 63 characters).",
+      "async": true,
+      "example": "tags:\n  title: Tags\n  type: array\n  default: []\n  ui:field: EntityTagsPicker\n"
+    },
+    {
+      "name": "DescriptorPicker",
+      "registeredNames": ["DescriptorPicker"],
+      "category": "dynamic-options",
+      "purpose": "Builds a dropdown of options by reading an array or a dictionary out of another 'descriptor' object: either the fixed context descriptor (formContext.__consumableInterface__) or the current value of another sibling field. Useful for letting the user pick one row/entry out of a data structure defined elsewhere in the same wizard, e.g. one column out of a schema array field, or one option out of an entity's spec loaded via EntityPicker + storeRawEntity.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/DescriptorPicker/DescriptorPicker.tsx",
+      "jsonSchemaType": "object: { value: <the selected item>, label: string, key: string }",
+      "uiOptions": [],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [
+        { "name": "sourceType", "type": "'descriptor' | 'field'", "required": true, "default": null, "description": "'descriptor' reads the fixed context descriptor (use source: '.'); 'field' reads the current value of another sibling field named by 'source'." },
+        { "name": "source", "type": "string", "required": true, "default": null, "description": "When sourceType is 'field', the name of the sibling field to read from. When sourceType is 'descriptor', conventionally '.'." },
+        { "name": "optionsAt", "type": "string", "required": true, "default": null, "description": "Lodash path, relative to the resolved descriptor, pointing to the array or plain object to turn into selectable options." },
+        { "name": "optionsDisplayNameAt", "type": "string", "required": false, "default": null, "description": "For array/object items that are objects, the property used as the option's display label. Defaults to the array index (array source) or the dictionary key (object source)." }
+      ],
+      "validation": "Throws a configuration error if the value at optionsAt is neither an array nor a plain object.",
+      "async": false,
+      "example": "targetValue:\n  title: Target value\n  ui:field: DescriptorPicker\n  sourceType: field\n  source: localRetrieve\n  optionsAt: sourceArray\n"
+    },
+    {
+      "name": "FilePicker",
+      "registeredNames": ["FilePicker"],
+      "category": "file-upload",
+      "purpose": "Lets the user upload a single file, which is encoded as a base64 data URL and stored as { fileContent, fileName } in the form data.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/FilePicker/FilePicker.tsx",
+      "jsonSchemaType": "object: { fileContent: string (data URL), fileName: string }",
+      "uiOptions": [],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [
+        { "name": "accept", "type": "string", "required": false, "default": null, "description": "HTML input 'accept' attribute value restricting selectable file types, e.g. '.json,.yaml,image/*'." },
+        { "name": "maxSizeMb", "type": "number", "required": false, "default": null, "description": "Maximum accepted file size in megabytes; falls back to the platform's configured max HTTP payload size if unset." }
+      ],
+      "validation": "Rejects files exceeding the configured/derived maximum size.",
+      "async": false,
+      "example": "logo:\n  title: Logo\n  ui:field: FilePicker\n  accept: image/*\n  maxSizeMb: 2\n"
+    },
+    {
+      "name": "CronExpressionPicker",
+      "registeredNames": ["CronExpressionPicker"],
+      "category": "validation-text",
+      "purpose": "Text input specialized for cron expressions, using the field's standard JSON Schema title/description as label/help text, with cron-syntax validation.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/CronExpressionPicker/CronExpressionPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Rejects values that are not a valid cron expression.",
+      "async": false,
+      "example": "cronExpression:\n  title: Cron expression\n  type: string\n  ui:field: CronExpressionPicker\n"
+    },
+    {
+      "name": "RegexPicker",
+      "registeredNames": ["RegexPicker", "PathPicker", "UrlPicker"],
+      "category": "validation-text",
+      "purpose": "Generic text input validated against a regular expression. Also registered under two preconfigured names that ship their own built-in rule: PathPicker (filesystem path syntax) and UrlPicker (http/https URL syntax) — for those two, `fieldLevelConfig.validation` is NOT needed.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/RegexPicker/RegexPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [
+        { "name": "ui:placeholder", "type": "string", "required": false, "default": null, "description": "Placeholder text shown in the empty input." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [
+        { "name": "validation", "type": "object", "required": true, "default": null, "description": "Required ONLY when ui:field is 'RegexPicker' (PathPicker/UrlPicker have a built-in rule and ignore this). Shape: { regularExpression: string (required), errorMessage: string (optional), flags: string (optional, regex flags) }." }
+      ],
+      "validation": "PathPicker: fixed Windows/Unix filesystem path regex. UrlPicker: must be a valid http(s) URL. RegexPicker: value must match validation.regularExpression, else validation.errorMessage (or a default message) is shown.",
+      "async": false,
+      "example": "code:\n  title: Code\n  type: string\n  ui:field: RegexPicker\n  validation:\n    regularExpression: \"^[A-Z]{3}-[0-9]{4}$\"\n    errorMessage: Must look like ABC-1234\n"
+    },
+    {
+      "name": "CustomUrlPicker",
+      "registeredNames": ["CustomUrlPicker"],
+      "category": "ai-assisted",
+      "purpose": "Autocomplete field that fetches its selectable options from a customer-provided external microservice API (or from schema.enum), optionally with Witty AI-assisted suggestions. Used for organization-specific dynamic pickers not backed by the catalog.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/CustomUrlPicker/CustomUrlPicker.tsx",
+      "jsonSchemaType": "array of any",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": null, "description": "Allow selecting a custom value not returned by the API." },
+        { "name": "maxNumberToSelect", "type": "number", "required": false, "default": null, "description": "Maximum number of items the user can select." },
+        { "name": "selectedField", "type": "string", "required": true, "default": null, "description": "Name of the form field holding the currently selected value(s), read back by the async validator." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Async — validates the selection against the external API's response.",
+      "async": true,
+      "example": "region:\n  title: Region\n  type: array\n  ui:field: CustomUrlPicker\n  ui:options:\n    selectedField: region\n"
+    },
+    {
+      "name": "IdentitiesPicker",
+      "registeredNames": ["IdentitiesPicker"],
+      "category": "access-control-identity",
+      "purpose": "Multi-select picker for Users and/or Groups from the catalog, with filters for membership, service accounts, and exclusions.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/IdentitiesPicker/IdentitiesPicker.tsx",
+      "jsonSchemaType": "string[] (entity refs) — use type: array with this picker",
+      "uiOptions": [
+        { "name": "showOnlyUserMemberGroups", "type": "boolean", "required": false, "default": null, "description": "Show only groups the current user belongs to." },
+        { "name": "showOnlyServiceAccounts", "type": "boolean", "required": false, "default": null, "description": "Show only service-account identities. Mutually exclusive with excludeServiceAccounts." },
+        { "name": "excludeServiceAccounts", "type": "boolean", "required": false, "default": null, "description": "Exclude service-account identities. Mutually exclusive with showOnlyServiceAccounts." },
+        { "name": "allowedKinds", "type": "string[]", "required": false, "default": null, "description": "Restrict to 'user' and/or 'group'." },
+        { "name": "maxIdentities", "type": "number", "required": false, "default": null, "description": "Maximum number of identities selectable." },
+        { "name": "excludeGroups", "type": "string[]", "required": false, "default": null, "description": "Group entity refs (format group:name or group:namespace/name) to exclude from the options." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "Rejects invalid allowedKinds/excludeGroups formats, rejects setting both showOnlyServiceAccounts and excludeServiceAccounts, and requires at least one selection if the field is required.",
+      "async": true,
+      "example": "approvers:\n  title: Approvers\n  type: array\n  ui:field: IdentitiesPicker\n  ui:options:\n    allowedKinds: [user]\n"
+    },
+    {
+      "name": "UsersAndGroupsPicker",
+      "registeredNames": ["UsersAndGroupsPicker"],
+      "category": "access-control-identity",
+      "purpose": "Selects Users and/or Groups, optionally scoped to specific RBAC roles or scopes — the data source switches to the RBAC Subjects API when roleIds/scopes are provided — with optional expansion of groups into individual members.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/UsersAndGroupsPicker/UsersAndGroupsPicker.tsx",
+      "jsonSchemaType": "string (single selection) or string[] (when allowMultiple is true)",
+      "uiOptions": [
+        { "name": "allowedKinds", "type": "('user'|'group')[]", "required": false, "default": ["user", "group"], "description": "Restrict selectable entity kinds." },
+        { "name": "allowMultiple", "type": "boolean", "required": false, "default": false, "description": "Allow selecting multiple subjects." },
+        { "name": "pageSize", "type": "number", "required": false, "default": 20, "description": "Number of items per page." },
+        { "name": "roleIds", "type": "string[]", "required": false, "default": null, "description": "Filter subjects by RBAC role IDs. When set, switches the data source to the RBAC Subjects API." },
+        { "name": "scopes", "type": "string[]", "required": false, "default": null, "description": "Filter subjects by scopes (URNs or entity refs like domain:finance). When set, switches the data source to the RBAC Subjects API." },
+        { "name": "resolveGroups", "type": "boolean", "required": false, "default": null, "description": "If true, expands group subjects into their individual user members." },
+        { "name": "ui:widget", "type": "string", "required": false, "default": null, "description": "Overrides the rendered widget." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": true,
+      "example": "reviewers:\n  title: Reviewers\n  type: array\n  ui:field: UsersAndGroupsPicker\n  ui:options:\n    allowMultiple: true\n"
+    },
+    {
+      "name": "RbacRolePicker",
+      "registeredNames": ["RbacRolePicker"],
+      "category": "access-control-identity",
+      "purpose": "Selects an RBAC role id from Witboost's RBAC configuration.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/RbacRolePicker/RbacRolePicker.tsx",
+      "jsonSchemaType": "string (role id)",
+      "uiOptions": [
+        { "name": "allowArbitraryValues", "type": "boolean", "required": false, "default": true, "description": "Whether to allow a custom role id not present in RBAC." },
+        { "name": "ui:widget", "type": "string", "required": false, "default": null, "description": "Overrides the rendered widget." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": true,
+      "example": "role:\n  title: Role\n  type: string\n  ui:field: RbacRolePicker\n"
+    },
+    {
+      "name": "AccessControlListPicker",
+      "registeredNames": ["AccessControlListPicker"],
+      "category": "access-control-identity",
+      "purpose": "Selects a subject to add to an Output Port's Access Control List. Requires the wizard to already carry an __consumableInterface__ descriptor (output port + environment) in formContext, typically produced upstream by a ReadsFromPicker/DescriptorPicker flow.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/AccessControlListPicker/AccessControlListPicker.tsx",
+      "jsonSchemaType": "string (subject entity ref)",
+      "uiOptions": [
+        { "name": "max", "type": "number", "required": false, "default": null, "description": "Maximum number of ACL entries (must be >= 1)." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "The field is disabled with an error if the required output-port/environment context is missing from formContext.",
+      "async": true,
+      "example": "acl:\n  title: Access Control List\n  type: string\n  ui:field: AccessControlListPicker\n  ui:options:\n    max: 10\n"
+    },
+    {
+      "name": "WittyTextPicker",
+      "registeredNames": ["WittyTextPicker"],
+      "category": "ai-assisted",
+      "purpose": "Plain text field enhanced with Witty AI-powered autocomplete suggestions, aware of the surrounding table row when used inside array/table fields.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/WittyTextPicker/WittyTextPicker.tsx",
+      "jsonSchemaType": "string",
+      "uiOptions": [],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": true,
+      "example": "description:\n  title: Description\n  type: string\n  ui:field: WittyTextPicker\n"
+    },
+    {
+      "name": "StarPicker",
+      "registeredNames": ["StarPicker"],
+      "category": "misc-widgets",
+      "purpose": "Star-rating input.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/StarPicker/StarPicker.tsx",
+      "jsonSchemaType": "number",
+      "uiOptions": [
+        { "name": "precision", "type": "0.5 | 1", "required": false, "default": 1, "description": "Rating granularity: half-star or full-star." },
+        { "name": "maxValue", "type": "number", "required": false, "default": 5, "description": "Maximum rating value." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None.",
+      "async": false,
+      "example": "rating:\n  title: Rating\n  type: number\n  ui:field: StarPicker\n"
+    },
+    {
+      "name": "PrototypeStatusPicker",
+      "registeredNames": ["PrototypeStatusPicker"],
+      "category": "misc-widgets",
+      "purpose": "Dropdown for selecting a System Prototype's status, rendering a colored status badge per option. Intended only for SystemPrototype status fields, not for general-purpose enums.",
+      "sourceFile": "plugins/wb-scaffolder/src/components/fields/PrototypeStatusPicker/PrototypeStatusPicker.tsx",
+      "jsonSchemaType": "string (PrototypeStatus enum)",
+      "uiOptions": [
+        { "name": "label", "type": "string", "required": false, "default": null, "description": "Overrides the field label." }
+      ],
+      "otherUiDirectives": [],
+      "fieldLevelConfig": [],
+      "validation": "None at picker level.",
+      "async": false,
+      "example": "prototypeStatus:\n  title: Prototype Status\n  type: string\n  ui:field: PrototypeStatusPicker\n"
+    }
+  ]
+}

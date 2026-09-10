@@ -23,6 +23,7 @@ Read these files before generating any template:
 - [Overview](./references/overview.md) — what templates are, wizard + skeleton, descriptor assembly
 - [Template Anatomy](./references/template-anatomy.md) — folder structure, Practice Shaper variability, tech adapter contract, monorepo/multi-repo, Nunjucks templating, edit templates
 - [Form Fields and Widgets](./references/template-fields.md) — field types, validation, objects, arrays, conditionals, layouts, UI directives, YAML substitution
+- [Custom Pickers Reference](./references/pickers.json) — every Witboost custom picker (`ui:field`) exposed by the wizard engine: purpose, `ui:options`, other `ui:*` directives, field-level config, validation, and example usage. Consult this whenever a field needs a `ui:field` beyond a plain widget.
 - [Manifest Schema Reference](./references/manifest-schema.md) — how the 4 JSON schemas relate, descriptor assembly flow
 - [Conventions](./references/conventions.md) — URN format, naming rules, versioning, git provider publish variants, UX principles, standard fields, repo naming
 - [Blueprints](./references/blueprint.md) — field contract, template discovery, dependency inference, mandatory preview, create and add-to-existing flows
