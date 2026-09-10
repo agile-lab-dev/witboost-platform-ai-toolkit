@@ -77,6 +77,7 @@ describe("domain skills", () => {
       "template-fields",
       "manifest-schema",
       "conventions",
+      "blueprint",
       "checklist",
     ]) {
       expect(existsSync(resolve(skillRoot, `references/${reference}.md`))).toBe(true);
@@ -86,6 +87,7 @@ describe("domain skills", () => {
       "edit-template.schema.json",
       "catalog-info.schema.json",
       "parameters.schema.json",
+      "blueprint.schema.json",
     ]) {
       expect(existsSync(resolve(skillRoot, `references/schemas/${schema}`))).toBe(true);
     }

@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "BlueprintV1alpha1",
+  "type": "object",
+  "examples": [
+    {
+      "apiVersion": "agilelab.it/v1alpha1",
+      "kind": "Blueprint",
+      "metadata": {
+        "title": "End-to-End-Test",
+        "name": "autotestblueprint",
+        "description": "Awaysome description",
+        "tags": ["blueprint", "cdp", "dataproduct", "prototype"]
+      },
+      "spec": {
+        "lifecycle": "experimental",
+        "owner": "group:datameshplatform",
+        "domain": "domain:finance",
+        "mainTemplateId": "template:default/dataproduct-aws-cdp-template",
+        "templates": [
+          {
+            "id": "template:default/cdp-aws-outputport-impala-template.1"
+          }
+        ]
+      }
+    }
+  ],
+  "allOf": [
+    {
+      "type": "object",
+      "required": ["apiVersion", "kind", "metadata", "spec"],
+      "properties": {
+        "apiVersion": {
+          "enum": ["agilelab.it/v1alpha1"]
+        },
+        "kind": {
+          "enum": ["Blueprint"]
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": ["name"]
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "lifecycle": {
+              "type": "string"
+            },
+            "owner": {
+              "type": "string"
+            },
+            "domain": {
+              "type": "string"
+            },
+            "mainTemplateId": {
+              "type": "string"
+            },
+            "templates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "dependencies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["id"]
+              }
+            }
+          },
+          "required": ["mainTemplateId", "templates"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+site_name: "BigQuery Data Product Blueprint"
+site_description: "A blueprint to create a DPAT-compliant data product with BigQuery as the underlying data platform."
+
+nav:
+  - Overview: index.md
+
+plugins:
+  - techdocs-core

@@ -81,6 +81,26 @@ Validate every template against this checklist before delivery.
 - [ ] All editable fields from the creation template are present
 - [ ] No `steps` section (v2 edit templates don't have steps)
 
+## catalog-info.yaml (Blueprint)
+
+- [ ] The document validates against [blueprint.schema.json](./schemas/blueprint.schema.json)
+- [ ] `apiVersion` is exactly `agilelab.it/v1alpha1`
+- [ ] `kind` is exactly `Blueprint`
+- [ ] The file is at the root of the blueprint repository
+- [ ] `metadata.name` uses only `[a-z0-9+#]` separated by `-`; same rule for every value in `tags`
+- [ ] `metadata.description` describes the use case, not a single technology
+- [ ] `metadata.annotations."backstage.io/techdocs-ref"` is set and `mkdocs.yml` + `docs/` exist
+- [ ] `spec.mainTemplateId` references a project (system) template, in `template:default/{name}` form
+- [ ] `spec.templates[].id` reference component templates only — no system template in the list
+- [ ] Every referenced template exists; the user has been reminded to register the ones that aren't yet
+- [ ] `dependencies` only reference ids present in the same `spec.templates` list
+- [ ] The dependency graph is acyclic, minimal, and never includes `mainTemplateId`
+- [ ] `spec.owner` uses the entity-ref form `group:<name>`
+- [ ] `spec.domain` is present only when the whole use case belongs to a single domain
+- [ ] `spec.parentRefField` is omitted unless the component templates use a non-default picker name
+- [ ] No `parameters`, `steps` or `skeleton` are present
+- [ ] The packaging preview was shown and explicitly confirmed by the user before writing any file
+
 ## General
 
 - [ ] All YAML files are valid YAML (no syntax errors)

@@ -6,6 +6,7 @@ These examples demonstrate how to create and edit components using Witboost temp
 
 The gold standard for Project templates can be found in the `knowledge/examples/example-project-template` folder.
 Similarly, the gold standard for Component templates can be found in the `knowledge/examples/example-component-template` folder.
+The gold standard for Blueprints — a collection of templates representing a complete use case — can be found in the `knowledge/examples/example-blueprint` folder.
 
 Those templates include:
 

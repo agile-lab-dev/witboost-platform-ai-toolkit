@@ -1,10 +1,10 @@
 ---
 name: witboost-template
-description: 'Create or modify Witboost templates (creation templates, edit templates, catalog-info skeletons). Use when: creating a new Witboost template, scaffolding a template.yaml, generating skeleton/catalog-info.yaml, building an edit-template.yaml, designing a Witboost wizard form, connecting a template to a tech adapter. Covers all component types: output port, workload, storage, data product, system, and custom Practice Shaper types.'
-argument-hint: 'Describe what kind of template you need (e.g., "Snowflake output port template for Azure DevOps")'
+description: 'Create or modify Witboost templates (creation templates, edit templates, catalog-info skeletons) and use case Blueprints. Use when: creating a new Witboost template, scaffolding a template.yaml, generating skeleton/catalog-info.yaml, building an edit-template.yaml, designing a Witboost wizard form, connecting a template to a tech adapter, creating a Blueprint that bundles a data product template with its component templates into a use case, adding a template to an existing Blueprint. Covers all component types: output port, workload, storage, data product, system, and custom Practice Shaper types.'
+argument-hint: 'Describe what kind of template or blueprint you need (e.g., "Snowflake output port template for Azure DevOps", "a blueprint for our BigQuery use case")'
 ---
 
-# Create Witboost Template
+# Create Witboost Templates and Blueprints
 
 ## When to Use
 
@@ -13,6 +13,8 @@ argument-hint: 'Describe what kind of template you need (e.g., "Snowflake output
 - User wants to generate a skeleton `catalog-info.yaml` for a component
 - User wants to connect a template to a specific tech adapter
 - User asks about Witboost template structure, schema, or conventions
+- User wants to create a Blueprint — a collection of templates representing a use case
+- User wants to add a template to an existing Blueprint
 
 ## Knowledge Base
 
@@ -23,6 +25,7 @@ Read these files before generating any template:
 - [Form Fields and Widgets](./references/template-fields.md) — field types, validation, objects, arrays, conditionals, layouts, UI directives, YAML substitution
 - [Manifest Schema Reference](./references/manifest-schema.md) — how the 4 JSON schemas relate, descriptor assembly flow
 - [Conventions](./references/conventions.md) — URN format, naming rules, versioning, git provider publish variants, UX principles, standard fields, repo naming
+- [Blueprints](./references/blueprint.md) — field contract, template discovery, dependency inference, mandatory preview, create and add-to-existing flows
 - [Checklist](./references/checklist.md) — pre-delivery validation checklist
 
 ### JSON Schemas
@@ -31,6 +34,7 @@ Read these files before generating any template:
 - [edit-template.schema.json](./references/schemas/edit-template.schema.json) — edit template structure
 - [catalog-info.schema.json](./references/schemas/catalog-info.schema.json) — skeleton catalog-info structure
 - [parameters.schema.json](./references/schemas/parameters.schema.json) — skeleton parameters structure
+- [blueprint.schema.json](./references/schemas/blueprint.schema.json) — blueprint catalog-info structure
 
 ### Examples - Gold standards
 
@@ -38,6 +42,7 @@ Complete working examples for each component type:
 
 - [Project (e.g. a Data Product)](./references/examples/example-project-template/) - complete working example for a generic project template. then customer may add project-specific files in `skeleton/` as needed.
 - [Component (e.g. an Output Port or a Storage Area or a Workload)](./references/examples/example-component-template/) — complete working example for a generic component template. then customer may add component-specific files in `skeleton/` as needed. 
+- [Blueprint (a use case bundling one project template and its component templates)](./references/examples/example-blueprint/) — complete working example of a `kind: Blueprint` catalog-info, with the dependency graph between component templates.
 
 ### Reusable Snippets
 
@@ -50,6 +55,23 @@ Complete working examples for each component type:
 - [snippets-retrieve-data.yaml](./references/examples/snippets/snippets-retrieve-data.yaml) — EntitySelectionPicker patterns for retrieving data from catalog entities
 
 ## Procedure
+
+### Step 0: Identify the Artifact
+
+Determine what the user is asking for before anything else:
+
+- **Template** (`template.yaml` + `skeleton/`, or `edit-template.yaml`) → follow **Procedure A**
+- **Blueprint** (`catalog-info.yaml` with `kind: Blueprint`), either new or to be extended → follow **Procedure B**
+
+Signals for a Blueprint: "use case", "bundle of templates", "always create these components together",
+"pre-defined data product shape", "add this template to the blueprint", "check existing data products
+for compliance". A Blueprint does not generate code and cannot exist before the templates it references.
+
+Signals for a Template: "create a template", "scaffold a template.yaml", "generate skeleton/catalog-info.yaml", "build an edit-template.yaml", "design a wizard form", "connect to a tech adapter"
+
+If they ask for multiple templates in the same request, design them one by one following the procedure A, then ask if they want to create a Blueprint that bundles them together, following procedure B.
+
+## Procedure A — Create a Template
 
 ### Step 1: Gather Requirements
 
@@ -176,6 +198,42 @@ Run through the [Checklist](./references/checklist.md):
 - [ ] Edit template has `ui:disabled: true` on locked fields
 - [ ] Empty arrays are handled in Nunjucks conditionals
 
+## Procedure B — Create or Update a Blueprint
+
+A Blueprint bundles one project (system) template with the component templates of a use case. It has no
+`parameters`, no `steps`, no `skeleton` and no URNs. Read [Blueprints](./references/blueprint.md) for the
+full playbook and [blueprint.schema.json](./references/schemas/blueprint.schema.json) for the contract.
+
+**Step B0 — Determine the flow.** Creating a new blueprint, or adding a template to an existing one?
+
+**Step B1 — Ask the minimum, and nothing else.**
+
+- *New blueprint*: which templates to include — a list of paths or a single folder containing them all —
+  and whether the user already knows of dependencies between them.
+- *Adding a template*: the only question is whether the user has preferences on the new template's
+  dependencies. Offer the dependencies you inferred as the default option so they can just confirm.
+
+Everything else — name, title, description, tags, icon, owner, lifecycle, domain, `mainTemplateId`,
+target path — is derived from the templates and proposed in the preview. Never ask for it upfront.
+
+**Step B2 — Discover, classify, infer.** Read every indicated template: `metadata.name` gives the
+`template:default/{name}` reference, the skeleton's `kind` tells System from Component, and
+`spec.mesh.specific`, `dependsOn` defaults and the READMEs give the evidence for the dependency graph.
+If more than one system template is found, **stop and ask which one is the main template**.
+
+**Step B3 — Show the preview and stop.** Present the proposed metadata, the main template, the component
+table with the evidence behind each dependency, a Mermaid graph, the files that will be written and any
+warnings. For the add-to-existing flow, show the full resulting blueprint plus a diff of the added lines.
+**Never write a file before the user confirms.**
+
+**Step B4 — Generate or patch.** New blueprint: `catalog-info.yaml` at the repository root, `mkdocs.yml`
+and `docs/index.md`. Existing blueprint: insert the entry preserving order, comments and formatting, and
+update `docs/index.md` if it enumerates the components.
+
+**Step B5 — Validate.** Check the result against `blueprint.schema.json` and the Blueprint section of the
+[Checklist](./references/checklist.md), then explain registration and remind the user to register any
+referenced template that is not yet in Witboost.
+
 ## Important Rules
 
 - **Never assume terminology.** "Data Product", "Output Port", etc. are the Data Mesh defaults. Always confirm what the customer calls these entities.
@@ -190,4 +248,10 @@ Run through the [Checklist](./references/checklist.md):
 - **Always ask monorepo vs multi-repo.** This fundamentally changes how `repoUrl` is constructed and whether the system template needs repo annotations.
 - **Start from starter kit when possible.** Don't reinvent the wheel — if a starter kit template exists for the target technology, use it as the base.
 - **Every Nunjucks variable must be traced end to end.** If `${{ values.foo }}` appears in the skeleton, then `foo: ${{ parameters.foo }}` must appear in the `fetch:template` step's `input.values`, and any reference to it in `skeleton/parameters.yaml` must resolve back to the same source.
+- **A Blueprint is not a template.** No `parameters`, no `steps`, no `skeleton`, no URNs. It never generates code; it orchestrates templates that already exist.
+- **Blueprints reference templates by `template:default/{metadata.name}`**, never by `urn:dmb:utm:...`. A dangling id breaks the blueprint card.
+- **Never put a system template in `spec.templates`.** The system template goes in `mainTemplateId` and is always implicitly created or selected first.
+- **Never write a blueprint without an approved preview** — this applies to creation and to adding a template to an existing blueprint.
+- **Infer blueprint dependencies from the templates.** Read them and derive the graph from evidence; ask only for confirmation, never for the raw list.
+- **More than one system template among the indicated templates? Stop and ask** which one is the main template. Do not pick one, and do not emit several blueprints.
 - **Validate against the checklist.** Go through every item before presenting the result to the user.

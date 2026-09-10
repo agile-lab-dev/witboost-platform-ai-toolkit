@@ -1,0 +1,59 @@
+# A Blueprint is NOT a scaffolder template: it has no parameters, no steps and no skeleton.
+# It is a Witboost custom entity that groups one project (system) template together with a set of
+# component templates, describing a well-known use case end to end.
+# The whole blueprint lives in a single `catalog-info.yaml` placed at the ROOT of its repository,
+# and is registered from Administration > Templates > Register Template pointing at this file
+# on a specific branch (branch names containing slashes are not supported by the import plugin).
+apiVersion: agilelab.it/v1alpha1 # this is static. it is always this one for a blueprint
+kind: Blueprint # this is static. it tells Witboost to treat this entity as a use case blueprint
+metadata:
+  title: BigQuery Data Product # human-readable title shown on the blueprint card in Builder > Blueprints
+  name: bigquery-data-product-blueprint # unique identifier of the blueprint. only [a-z0-9+#] separated by [-]; no spaces or other special characters. convention: {use-case}-blueprint
+  description: A blueprint to create a data product with BigQuery as the underlying data platform, ensuring that your data product is compliant to DPAT framework and compliance requirements. # one-phrase description of the USE CASE (not of a single technology), shown on the blueprint card
+  mesh:
+    icon: https://images.icon-icons.com/2699/PNG/512/google_bigquery_logo_icon_168150.png # icon shown on the blueprint card. usually the icon of the dominant technology of the use case
+  annotations:
+    backstage.io/techdocs-ref: dir:. # renders the mkdocs.yml + docs/ folder of this repository as the blueprint documentation
+  tags: # tags used for classification and search in the Witboost UI. same charset rule as metadata.name
+    - data-product
+    - bigquery
+
+spec:
+  lifecycle: experimental # experimental | production. use experimental while the use case is still being validated
+  owner: group:datameshplatform # the group owning the blueprint, typically the platform team. entity-ref form `group:<name>`
+
+  # OPTIONAL. Domain the whole use case belongs to, in entity-ref form `domain:<name>`.
+  # Set it only when every template of the blueprint clearly belongs to the same domain; omit it otherwise.
+  # domain: domain:finance
+
+  # OPTIONAL. Name of the picker field, in the component templates, that Witboost auto-fills with the
+  # system created/selected from the main template. Defaults to `dataproduct`, which is the field name
+  # used by the example component template, so it can normally be omitted.
+  # Only override it if your component templates name that picker differently (e.g. `parentRef`).
+  # parentRefField: dataproduct
+
+  # The main template MUST be a project (system) template, i.e. one whose skeleton produces `kind: System`.
+  # Format: template:default/{metadata.name of the template} lookup this in the `template.yaml` of the template you want to link here.
+  # Witboost matches this against `spec.mesh.useCaseTemplateId` of existing systems, so that
+  # "Select Existing Data Product" only lists data products actually created from this template.
+  mainTemplateId: template:default/data-product-template.0
+
+  # The component templates offered by this blueprint, in the order they should be presented.
+  # This list MUST NOT contain any project (system) template: only component templates
+  # (output ports, workloads, storage areas, ...). Every id must already exist and be registered
+  # in Witboost, otherwise the blueprint card will not render correctly. You don't have to register them, but remember the user to do so.
+  templates:
+    - id: template:default/composer-workload-template.0
+      dependencies: [] # no dependencies: this template can be added as soon as the data product exists
+
+    - id: template:default/dbt-workload-template.0
+      dependencies: []
+
+    - id: template:default/bigquery-outputport-template.0
+      # `dependencies` lists the ids of templates that must already have been instantiated in the wizard
+      # before this one becomes selectable. Use it to encode the natural build order of the use case:
+      # here the BigQuery output port exposes tables produced by the dbt workload, so dbt comes first.
+      # Dependencies must reference ids present in this same `templates` list (never the main template,
+      # which is always implicitly required first). Keep the graph acyclic.
+      dependencies:
+        - template:default/dbt-workload-template.0

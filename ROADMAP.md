@@ -9,7 +9,7 @@ repository, grouped by domain.
 - Schema-compliant pickers configuration by extracting schema/metadata from
   the Witboost UI codebase
 - Testing capabilities
-- Support for blueprints
+- ✅ Support for blueprints
 - Dedicated SKILL for adding/removing steps/fields on an existing template
 - Support for subcomponents and consumable/shoppable flag adjustments
 
