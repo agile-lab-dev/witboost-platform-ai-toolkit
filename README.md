@@ -32,10 +32,13 @@ cd ~/witboost-workspace
 npx skills add \
   "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.3" \
   --skill witboost-toolkit \
-  --skill witboost-tech-adapter
+  --skill witboost-tech-adapter \
+  --skill witboost-template
 ```
 
 When prompted for the installation scope, select **Project**. This creates `skills-lock.json` in the current workspace and makes the setup reproducible. Use **Global** only for personal skills that should be available across all your workspaces.
+
+Once installation is complete your skills will be available to your coding agent. As an example, in VS Code you can use them by typing `/witboost-<name of the skill>` in the Copilot chat input box.
 
 ## Configure A Workspace
 
