@@ -56,6 +56,22 @@ Validate every template against this checklist before delivery.
 - [ ] `spec.mesh.dependsOn` handles both empty and non-empty arrays correctly
 - [ ] URN format: `urn:dmb:utm:[a-zA-Z0-9_-]+:\d+(\.\d+\.\d+)?` (use case) or `urn:dmb:itm:...` (infrastructure)
 
+## Environment Parameters
+
+See [Environment Parameters](./environment-parameters.md) for the full playbook.
+
+- [ ] The list of registered environments was confirmed with the user — not assumed to be dev/prod
+- [ ] Every field whose value differs per environment is collected once **per environment**
+- [ ] Every use of `environment` / `env` is guarded by `{% if environment %}`
+- [ ] Every environment branch has an `{% else %}` fallback that emits valid YAML (explicit `null`s)
+- [ ] Inside `{% for %}` loops, each branch keeps the item's shape — no branch produces an empty item
+- [ ] Comparisons use `==`, not `===`
+- [ ] Pattern A: the skeleton uses `${{ env.<key> }}`, never a hardcoded `environmentParameters.<env>.<key>`
+- [ ] Pattern A: only one `environmentParameters: true` section, and no picker in it is referenced by another picker
+- [ ] Pattern B: every registered environment has a branch, and every per-environment object reaches `input.values`
+- [ ] No per-environment map survives in `spec.mesh.specific` after rendering — the tech adapter receives resolved scalars
+- [ ] The skeleton was rendered for every environment **and** with no environment, and all outputs are valid YAML
+
 ## Tech Adapter Alignment
 
 - [ ] The `infrastructureTemplateId` in catalog-info.yaml matches a real, registered tech adapter URN

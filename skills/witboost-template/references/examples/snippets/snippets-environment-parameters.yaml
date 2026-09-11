@@ -1,0 +1,213 @@
+# Environment Parameters — copy-pasteable patterns
+#
+# Values that differ per target environment (region, storage account, cluster size, secrets)
+# must be collected once per registered environment, not once in total.
+# See ../../environment-parameters.md for the full playbook.
+
+# ---------------------------------------------------------------------------
+# PATTERN A — native environmentParameters (edit template, flat key set)
+# Witboost renders one form section per registered environment automatically.
+# ---------------------------------------------------------------------------
+apiVersion: witboost.com/v2
+kind: EditTemplate
+metadata:
+  name: edit-s3-storage
+  title: Edit S3 Storage Area
+spec:
+  useCaseTemplateId:
+    - urn:dmb:utm:s3-storage-template:0.0.0
+  parameters:
+    - title: Environment Configuration
+      description: >-
+        These values are asked once per target environment registered in Witboost.
+        At most one environmentParameters section is allowed per template, and its
+        pickers cannot be referenced by other pickers.
+      environmentParameters: true
+      properties:
+        region:
+          title: AWS Region
+          type: string
+          description: Region where the bucket lives in this environment
+          enum:
+            - eu-west-1
+            - eu-central-1
+            - us-east-1
+        bucketPrefix:
+          title: Bucket Prefix
+          type: string
+        retentionDays:
+          title: Retention (days)
+          type: number
+          default: 30
+
+# Resulting parameters.yaml (written by Witboost, never authored by hand):
+#
+# environmentParameters:
+#   development:
+#     region: eu-west-1
+#     bucketPrefix: dev-analytics
+#     retentionDays: 7
+#   production:
+#     region: eu-central-1
+#     bucketPrefix: prod-analytics
+#     retentionDays: 365
+#
+# Matching skeleton/catalog-info.yaml fragment — `env.x` is an alias for
+# `environmentParameters[environment.id].x`, so no environment id is hardcoded:
+#
+# %SKELETON
+# apiVersion: backstage.io/v1alpha1
+# kind: Component
+# spec:
+#   mesh:
+#     specific:
+#       {% if environment %}
+#       region: ${{ env.region }}
+#       bucketName: ${{ env.bucketPrefix }}-${{ values.identifier }}
+#       retentionDays: ${{ env.retentionDays }}
+#       {% else %}
+#       region: null
+#       bucketName: null
+#       retentionDays: null
+#       {% endif %}
+
+---
+# ---------------------------------------------------------------------------
+# PATTERN B — explicit per-environment fields + Nunjucks branching
+# Preferred default: works in the creation wizard, supports arrays, pickers,
+# conditionals and custom layouts. Environment ids are hardcoded in the skeleton.
+# ---------------------------------------------------------------------------
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: databricks-ingestion-workload.1
+  title: Databricks Ingestion Workload
+spec:
+  owner: agilelab
+  type: workload
+  parameters:
+    # B.1 — flat per-environment configuration, side by side on one page
+    - title: Environment Configuration
+      description: Provide the configuration for each target environment.
+      properties:
+        devSpecific:
+          type: object
+          title: Development Environment
+          properties:
+            workspaceUrl:
+              title: Databricks Workspace URL
+              type: string
+            clusterSize:
+              title: Cluster Size
+              type: string
+              enum: [small, medium, large]
+              default: small
+        prodSpecific:
+          type: object
+          title: Production Environment
+          properties:
+            workspaceUrl:
+              title: Databricks Workspace URL
+              type: string
+            clusterSize:
+              title: Cluster Size
+              type: string
+              enum: [small, medium, large]
+              default: large
+
+    # B.2 — per-environment configuration nested inside array items.
+    # Pattern A cannot express this: environmentParameters is a flat key set.
+    - title: Sources
+      properties:
+        sources:
+          type: array
+          title: Source Tables
+          items:
+            type: object
+            required:
+              - table
+            properties:
+              table:
+                title: Source Table
+                type: string
+              devSpecific:
+                type: object
+                title: Development Environment
+                properties:
+                  storageAccount:
+                    title: Storage Account
+                    type: string
+                  containerName:
+                    title: Container Name
+                    type: string
+                  format:
+                    title: Format
+                    type: string
+                    enum: [delta, parquet, csv, json]
+                    default: delta
+              prodSpecific:
+                type: object
+                title: Production Environment
+                properties:
+                  storageAccount:
+                    title: Storage Account
+                    type: string
+                  containerName:
+                    title: Container Name
+                    type: string
+                  format:
+                    title: Format
+                    type: string
+                    enum: [delta, parquet, csv, json]
+                    default: delta
+
+  steps:
+    - id: template
+      name: Fetch Skeleton + Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: .
+        values:
+          # every per-environment object must reach the renderer, like any other field
+          devSpecific: ${{ parameters.devSpecific }}
+          prodSpecific: ${{ parameters.prodSpecific }}
+          sources: ${{ parameters.sources }}
+
+# Matching skeleton/catalog-info.yaml fragment:
+#
+# %SKELETON
+# apiVersion: backstage.io/v1alpha1
+# kind: Component
+# spec:
+#   mesh:
+#     specific:
+#       # flat case
+#       {% if environment and environment.id == 'development' %}
+#       workspaceUrl: ${{ values.devSpecific.workspaceUrl }}
+#       clusterSize: ${{ values.devSpecific.clusterSize }}
+#       {% elif environment and environment.id == 'production' %}
+#       workspaceUrl: ${{ values.prodSpecific.workspaceUrl }}
+#       clusterSize: ${{ values.prodSpecific.clusterSize }}
+#       {% else %}
+#       workspaceUrl: null
+#       clusterSize: null
+#       {% endif %}
+#       # array case — the {% else %} branch is mandatory, otherwise the
+#       # no-environment render emits a list item with no properties (invalid YAML)
+#       sourceInfo: {% if values.sources | length > 0 %}{% for source in values.sources %}
+#         - table: ${{ source.table }}
+#           {% if environment and environment.id == 'development' %}
+#           storageAccount: ${{ source.devSpecific.storageAccount }}
+#           containerName: ${{ source.devSpecific.containerName }}
+#           format: ${{ source.devSpecific.format }}
+#           {% elif environment and environment.id == 'production' %}
+#           storageAccount: ${{ source.prodSpecific.storageAccount }}
+#           containerName: ${{ source.prodSpecific.containerName }}
+#           format: ${{ source.prodSpecific.format }}
+#           {% else %}
+#           storageAccount: null
+#           containerName: null
+#           format: null
+#           {% endif %}
+#       {% endfor %}{% else %}[]{% endif %}

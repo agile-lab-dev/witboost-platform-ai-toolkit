@@ -24,6 +24,7 @@ Read these files before generating any template:
 - [Overview](./references/overview.md) — what templates are, wizard + skeleton, descriptor assembly
 - [Template Anatomy](./references/template-anatomy.md) — folder structure, Practice Shaper variability, tech adapter contract, monorepo/multi-repo, Nunjucks templating, edit templates
 - [Form Fields and Widgets](./references/template-fields.md) — field types, validation, objects, arrays, conditionals, layouts, UI directives, YAML substitution
+- [Environment Parameters](./references/environment-parameters.md) — values that differ per target environment (region, workspace, cluster size, secrets): how to collect them once per environment, the `environment`/`env` rendering context, and the two valid patterns
 - [Custom Pickers Reference](./references/pickers.json) — every Witboost custom picker (`ui:field`) exposed by the wizard engine: purpose, `ui:options`, other `ui:*` directives, field-level config, validation, and example usage. Consult this whenever a field needs a `ui:field` beyond a plain widget.
 - [Manifest Schema Reference](./references/manifest-schema.md) — how the 4 JSON schemas relate, descriptor assembly flow
 - [Conventions](./references/conventions.md) — URN format, naming rules, versioning, git provider publish variants, UX principles, standard fields, repo naming
@@ -56,6 +57,7 @@ Complete working examples for each component type:
 - [snippets-layouts.yaml](./references/examples/snippets/snippets-layouts.yaml) — object, horizontal, and table layout examples
 - [snippets-dynamic-select.yaml](./references/examples/snippets/snippets-dynamic-select.yaml) — DescriptorPicker for dynamic selects from local fields and catalog entities
 - [snippets-retrieve-data.yaml](./references/examples/snippets/snippets-retrieve-data.yaml) — EntitySelectionPicker patterns for retrieving data from catalog entities
+- [snippets-environment-parameters.yaml](./references/examples/snippets/snippets-environment-parameters.yaml) — both environment-parameter patterns, wizard + skeleton, flat and inside arrays
 
 ## Procedure
 
@@ -126,6 +128,11 @@ If the user provides existing templates or a tech adapter codebase, read them FI
     - Do you need any **additional** fields beyond the standard ones? For example: schema columns, connection strings, schedule, SLA terms, data contract fields, environment-specific config, etc.
     - Remember: keep the creation wizard minimal. Ask only what's strictly necessary for the first deployment. Complex or optional fields can go in the edit template.
 
+**Environments** (ask whenever any additional field could be infrastructure configuration):
+11b. Which environments are registered in this Witboost instance? Never assume `development`/`production` — `qa`, `staging`, `preproduction`, `acceptance` are all common.
+    - Then, for each additional field: **does this value differ per environment?** Region, account/subscription/workspace id, endpoints, storage account, catalog/schema names, cluster size, secret names and network config almost always do; names, owners, tags and data contracts almost never do.
+    - Any field that varies must be collected **once per environment**, not once in total. Read [Environment Parameters](./references/environment-parameters.md) before designing those fields.
+
 **Ask if not obvious:**
 
 **Practice Shaper context** (skip if inferred from existing templates):
@@ -149,11 +156,12 @@ Read the relevant files from the knowledge base:
 1. Read [Overview](./references/overview.md) first for the overall concept
 2. Read [Template Anatomy](./references/template-anatomy.md) for the overall structure
 3. Read [Conventions](./references/conventions.md) for URN format and git provider variants
-4. Read the JSON schema for the file you're generating:
+4. If any field varies per target environment, read [Environment Parameters](./references/environment-parameters.md)
+5. Read the JSON schema for the file you're generating:
    - Creating `template.yaml` → read [template.schema.json](./references/schemas/template.schema.json)
    - Creating `edit-template.yaml` → read [edit-template.schema.json](./references/schemas/edit-template.schema.json)
    - Creating `skeleton/catalog-info.yaml` → read [catalog-info.schema.json](./references/schemas/catalog-info.schema.json)
-5. Read the examples folder starting with [how-to-use.md](./references/examples/how-to-use.md), then read the matching example for the component type being built
+6. Read the examples folder starting with [how-to-use.md](./references/examples/how-to-use.md), then read the matching example for the component type being built
 
 ### Step 3: Generate Files
 
@@ -171,6 +179,7 @@ Generate files in this order. **After generating, clearly summarize to the user 
    - **Monorepo component templates**: add hidden fields to auto-read the parent system's repo name and root directory via `EntitySelectionPicker` with `ui:property: metadata.annotations["<provider>.repo-name"]`. Build `repoUrl` from the parent's repo info. Set `targetPath` to a subdirectory like `./components/${{ parameters.name | lower }}`.
    - **Monorepo system templates**: the system creates the repo. No need to read repo info from a parent.
    - **Multi-repo templates**: auto-generate `repoUrl` from the naming convention. Do NOT use `RepoUrlPicker`.
+   - **Environment-dependent fields**: collect them once per registered environment. Default to **Pattern B** (explicit `devSpecific`/`prodSpecific` objects + `{% if environment.id == '...' %}` branching in the skeleton) — it works in the creation wizard, inside arrays, and with pickers and conditionals. Use **Pattern A** (`environmentParameters: true` on an edit-template page + `${{ env.<key> }}` in the skeleton) only for a small, flat, picker-free key set. See [Environment Parameters](./references/environment-parameters.md).
 
 2. **`skeleton/catalog-info.yaml`** — the entity descriptor
    - Use `apiVersion: backstage.io/v1alpha1`
@@ -179,6 +188,8 @@ Generate files in this order. **After generating, clearly summarize to the user 
    - Fill `spec.mesh.specific` with the fields expected by the tech adapter
    - Use Nunjucks expressions referencing `values.*` — every variable must exist in the `fetch:template` step's `input.values`
    - Handle empty arrays: `{% if values.arr | length > 0 %}...{% else %}[]{% endif %}`
+   - Guard every use of `environment` / `env`: they are `null` outside an environment rendering context. Always provide an `{% else %}` branch that still emits valid YAML (explicit `null`s).
+   - After rendering, every `spec.mesh.specific` property must be a plain value for the deploy environment — never a per-environment map for the tech adapter to unpack
    - **Monorepo system templates**: inject the repo name and root directory into `metadata.annotations` so child component templates can discover them
 
 3. **`edit-template.yaml`** (if requested)
@@ -201,6 +212,7 @@ Run through the [Checklist](./references/checklist.md):
 - [ ] `spec.generates` matches `catalog-info.yaml` `kind`
 - [ ] `spec.type` aligns with `spec.generates`
 - [ ] Every Nunjucks variable is traced end to end: skeleton → `fetch:template` step values → `parameters.yaml`
+- [ ] Environment-dependent values are collected per environment, and `environment`/`env` uses are guarded
 - [ ] URNs follow the format `urn:dmb:utm:...:version` / `urn:dmb:itm:...:version`
 - [ ] `spec.mesh.specific` contains the fields expected by the tech adapter
 - [ ] `infrastructureTemplateId` matches the registered tech adapter URN
@@ -261,8 +273,9 @@ A field lives in three places in a creation template and two in an edit template
 
 1. **Creation template, edit template, or both?**
 2. **What kind of data does the field collect?** Ask about the *data*, never about the widget —
-   you choose the field type and picker. Also capture: required or optional, default, and any
-   condition that should gate its visibility.
+   you choose the field type and picker. Also capture: required or optional, default, any
+   condition that should gate its visibility, and **whether the value differs per target
+   environment** (region, workspace, cluster size, secrets, endpoints usually do).
 3. **Where should the value land in the descriptor** (which property under `spec.mesh` in
    `catalog-info.yaml`)? Users rarely know — **propose a placement and ask for confirmation**
    instead of asking an open question.
@@ -281,6 +294,8 @@ pure wizard controls stay parameters only. Show the resulting `spec.mesh` fragme
   `fetch:template` step values (**most commonly forgotten hop**), add to `skeleton/catalog-info.yaml`.
 - Edit template: add to `parameters` (`ui:disabled: true` if locked). Ensure the property also exists
   in the skeleton, with a default when the field is edit-only.
+- Environment-dependent field: wire one input per registered environment and branch in the skeleton —
+  see [Environment Parameters](./references/environment-parameters.md).
 - Handle empty arrays and optional values with Nunjucks guards.
 
 **Step C5 — Report.** List the files changed, the picker chosen and why, the descriptor path, and
@@ -317,6 +332,8 @@ contract changed.
 - **Never use `RepoUrlPicker`** unless explicitly requested. Auto-generate repo names using a convention (default: `wit-dp-<name>` for systems, `wit-cmp-<name>` for components) and communicate the convention to the user.
 - **A field change is a surgical edit, not a regeneration.** When asked to add or remove one field, never rewrite the whole template. Read the existing files and follow their conventions.
 - **Ask for the data, choose the widget yourself.** Users describe what they need to collect; picking the field type and `ui:field` is your job.
+- **Never collect an environment-dependent value as a single flat field.** If the value differs between dev and prod (region, account, endpoint, storage, cluster size, secret name), it must be asked once per registered environment and resolved at render time. Ask which environments exist — never assume dev/prod. Default to Pattern B, use Pattern A only for a small flat key set in an edit template.
+- **The tech adapter never sees a per-environment map.** After rendering, every `spec.mesh.specific` property is the resolved value for the deploy environment.
 - **Propose the descriptor placement, don't ask for it.** Users rarely know where a value should sit under `spec.mesh`. Offer a concrete YAML fragment to confirm.
 - **Never remove a field before scanning for dependencies.** If anything references it, present a resolution plan and get explicit confirmation first.
 - **Never hardcode sample data in `skeleton/parameters.yaml`.** This file is auto-generated by Witboost. The template developer only provides Nunjucks expressions: `readonly` section for components (`__system__`, `__version__`), `values` section for systems (tech-adapter config). Witboost fills the rest from the wizard and `fetch:template` step.

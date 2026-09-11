@@ -48,6 +48,9 @@ Use the interactive question tool if available, with selectable options plus fre
    that answer onto a field type and picker (Step A2). Do not ask the user to name a `ui:field`.
    Also capture: required or optional, default value, and whether it should only appear under some
    condition (e.g. only when another field is `true`).
+   Also ask, or determine yourself, whether the value **differs per target environment**. If it does,
+   it is not one field — it is one field per registered environment. Read
+   [Environment Parameters](./environment-parameters.md) and design it there before continuing.
 3. **Where should it land in the descriptor?** — i.e. which property under `spec.mesh` of
    `catalog-info.yaml`. Users usually do not know. **Propose a placement** (Step A3) and ask them to
    confirm or correct it, rather than asking an open question.
@@ -71,6 +74,7 @@ Map the data to a field. Consult [Form Fields and Widgets](./template-fields.md)
 | A pattern-constrained string (cron, ARN, connection string) | `RegexPicker` with `validation` |
 | A repeatable set of structured rows (e.g. schema columns) | `type: array` of `type: object`, table layout |
 | A yes/no switch, often gating other fields | `type: boolean` |
+| A value that differs per target environment (region, workspace, cluster size, secret) | one input per environment — see [Environment Parameters](./environment-parameters.md) |
 | A value the user must never edit | the right picker + `ui:widget: hidden` or `ui:disabled: true` |
 
 If no picker fits cleanly, prefer a plain typed field over an ill-fitting picker, and say so.

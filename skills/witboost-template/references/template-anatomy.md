@@ -158,7 +158,7 @@ The `parameters.yaml` file is **auto-generated** by Witboost — the template de
 | `values` | `${{ values.* }}` | Computed/derived values from the `fetch:template` step's `input.values`. For backward compatibility with legacy templates. |
 | `readonly` | `${{ readonly.* }}` | System-managed values that cannot be edited by the user. Includes reserved parameters like `__name__`, `__version__`, `__system__`, `__instanceOf__`. |
 | `refs` | `${{ refs.* }}` | Values loaded from external sources (repository files, published descriptors) at render time. |
-| `environmentParameters` | `${{ env.* }}` | Environment-specific values (e.g., different cluster sizes for dev vs prod). |
+| `environmentParameters` | `${{ env.* }}` | Environment-specific values (e.g., different cluster sizes for dev vs prod). `env.<key>` is an alias for `environmentParameters[environment.id].<key>`. See [Environment Parameters](./environment-parameters.md). |
 
 **Reserved readonly parameters** (auto-managed by Witboost):
 - `readonly.__name__` → `metadata.name` (auto-updated on new versions)
