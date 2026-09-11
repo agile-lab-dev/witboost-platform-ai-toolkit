@@ -5,12 +5,11 @@ repository, grouped by domain.
 
 ## Witboost Template
 
-- Support for environment-specific parameters in templates
-- Schema-compliant pickers configuration by extracting schema/metadata from
-  the Witboost UI codebase
+- ✅ Support for environment-specific parameters in templates
+- Schema-compliant pickers configuration by extracting schema/metadata from a Witboost API
 - Testing capabilities
 - ✅ Support for blueprints
-- Dedicated SKILL for adding/removing steps/fields on an existing template
+- ✅ Dedicated SKILL for adding/removing steps/fields on an existing template
 - Support for subcomponents and consumable/shoppable flag adjustments
 
 ## Witboost Tech Adapter

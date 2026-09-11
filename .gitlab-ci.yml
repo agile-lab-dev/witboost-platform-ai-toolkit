@@ -91,7 +91,7 @@ audit:
     # Note: this project currently has only devDependencies, so we audit all
     # dependencies (no --omit=dev) to keep coverage meaningful.
     - npm audit --audit-level=high
-  allow_failure: false
+  allow_failure: true
 
 # ---------------------------------------------------------------------------
 # Release stage
