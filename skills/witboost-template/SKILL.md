@@ -1,7 +1,7 @@
 ---
 name: witboost-template
-description: 'Create or modify Witboost templates (creation templates, edit templates, catalog-info skeletons) and use case Blueprints. Use when: creating a new Witboost template, scaffolding a template.yaml, generating skeleton/catalog-info.yaml, building an edit-template.yaml, designing a Witboost wizard form, connecting a template to a tech adapter, creating a Blueprint that bundles a data product template with its component templates into a use case, adding a template to an existing Blueprint. Covers all component types: output port, workload, storage, data product, system, and custom Practice Shaper types.'
-argument-hint: 'Describe what kind of template or blueprint you need (e.g., "Snowflake output port template for Azure DevOps", "a blueprint for our BigQuery use case")'
+description: 'Create or modify Witboost templates (creation templates, edit templates, catalog-info skeletons) and use case Blueprints. Use when: creating a new Witboost template, scaffolding a template.yaml, generating skeleton/catalog-info.yaml, building an edit-template.yaml, designing a Witboost wizard form, adding or removing a field in an existing template or edit template, connecting a template to a tech adapter, creating a Blueprint that bundles a data product template with its component templates into a use case, adding a template to an existing Blueprint. Covers all component types: output port, workload, storage, data product, system, and custom Practice Shaper types.'
+argument-hint: 'Describe what kind of template or blueprint you need (e.g., "Snowflake output port template for Azure DevOps", "add a retention field to my output port template", "a blueprint for our BigQuery use case")'
 ---
 
 # Create Witboost Templates and Blueprints
@@ -10,6 +10,7 @@ argument-hint: 'Describe what kind of template or blueprint you need (e.g., "Sno
 
 - User wants to create a new Witboost creation template (`template.yaml`)
 - User wants to create or update an edit template (`edit-template.yaml`)
+- User wants to add or remove a field in an existing template or edit template
 - User wants to generate a skeleton `catalog-info.yaml` for a component
 - User wants to connect a template to a specific tech adapter
 - User asks about Witboost template structure, schema, or conventions
@@ -26,6 +27,7 @@ Read these files before generating any template:
 - [Custom Pickers Reference](./references/pickers.json) — every Witboost custom picker (`ui:field`) exposed by the wizard engine: purpose, `ui:options`, other `ui:*` directives, field-level config, validation, and example usage. Consult this whenever a field needs a `ui:field` beyond a plain widget.
 - [Manifest Schema Reference](./references/manifest-schema.md) — how the 4 JSON schemas relate, descriptor assembly flow
 - [Conventions](./references/conventions.md) — URN format, naming rules, versioning, git provider publish variants, UX principles, standard fields, repo naming
+- [Field Changes](./references/field-changes.md) — adding or removing a single field in an existing template: the wiring chain, picker selection, descriptor placement, dependency scan before removal
 - [Blueprints](./references/blueprint.md) — field contract, template discovery, dependency inference, mandatory preview, create and add-to-existing flows
 - [Checklist](./references/checklist.md) — pre-delivery validation checklist
 
@@ -61,8 +63,13 @@ Complete working examples for each component type:
 
 Determine what the user is asking for before anything else:
 
-- **Template** (`template.yaml` + `skeleton/`, or `edit-template.yaml`) → follow **Procedure A**
+- **A new template** (`template.yaml` + `skeleton/`, or `edit-template.yaml`) → follow **Procedure A**
 - **Blueprint** (`catalog-info.yaml` with `kind: Blueprint`), either new or to be extended → follow **Procedure B**
+- **A field change on an existing template** (add or remove one field) → follow **Procedure C**
+
+Signals for a Field Change: "add a field", "remove a field", "add a parameter to the wizard", "I also
+need to ask the user for X", "drop this property from the descriptor", "this field is no longer needed".
+Do NOT regenerate the whole template for a field change — make a surgical edit.
 
 Signals for a Blueprint: "use case", "bundle of templates", "always create these components together",
 "pre-defined data product shape", "add this template to the blueprint", "check existing data products
@@ -126,7 +133,9 @@ If the user provides existing templates or a tech adapter codebase, read them FI
 13. What terminology does your organization use? (e.g., is it "Data Product" or something else?)
 
 **Starting point:**
-14. Do you have an existing starter kit template to customize? (from https://github.com/agile-lab-dev/witboost-starter-kit)
+14. Do you want to start from one of the [Witboost Starter Kit](https://github.com/agile-lab-dev/witboost-starter-kit) templates instead of building from scratch? Always ask this unless the user already brought up the starter kit themselves.
+    - If yes: ask the user to give you the GitHub URL of the specific starter kit template repository they want to use (the starter kit index links to 50+ separate repos — don't guess which one matches their technology). Fetch and read that repo before generating anything, and use it as the base.
+    - If no, or they don't have one: follow the structure in this skill from scratch.
 
 **Edit template:**
 15. Do you also need an edit template? (Recommended — it allows users to modify the component after creation without editing YAML files directly. The edit template typically has more fields than the creation template.)
@@ -235,6 +244,69 @@ update `docs/index.md` if it enumerates the components.
 [Checklist](./references/checklist.md), then explain registration and remind the user to register any
 referenced template that is not yet in Witboost.
 
+## Procedure C — Add or Remove a Field
+
+Read [Field Changes](./references/field-changes.md) for the full playbook, plus
+[Custom Pickers Reference](./references/pickers.json) when choosing a `ui:field`. Always read the
+existing `template.yaml`, `edit-template.yaml` and `skeleton/catalog-info.yaml` first — the change must
+follow the conventions already in the template, not this skill's defaults.
+
+A field lives in three places in a creation template and two in an edit template:
+`parameters` → `fetch:template` `input.values` → `skeleton/catalog-info.yaml` (creation), and
+`parameters` → the component's `catalog-info.yaml` (edit, no steps). Every hop must be kept in sync.
+
+### Adding a field
+
+**Step C1 — Ask three questions in a single round** (use the interactive question tool with options):
+
+1. **Creation template, edit template, or both?**
+2. **What kind of data does the field collect?** Ask about the *data*, never about the widget —
+   you choose the field type and picker. Also capture: required or optional, default, and any
+   condition that should gate its visibility.
+3. **Where should the value land in the descriptor** (which property under `spec.mesh` in
+   `catalog-info.yaml`)? Users rarely know — **propose a placement and ask for confirmation**
+   instead of asking an open question.
+
+**Step C2 — Choose the picker.** Map the data description onto a type/`ui:field` using the decision
+table in [Field Changes](./references/field-changes.md) and the authoritative
+[pickers.json](./references/pickers.json). Prefer a plain typed field over an ill-fitting picker.
+
+**Step C3 — Propose the descriptor placement.** Default: tech-adapter configuration goes to
+`spec.mesh.specific.<field>`; platform-standard concepts reuse the existing `spec.mesh.*` property;
+pure wizard controls stay parameters only. Show the resulting `spec.mesh` fragment as YAML.
+
+**Step C4 — Wire it.** Keep the parameter name, the `values` key and the Nunjucks variable identical.
+
+- Creation template: add to `parameters`, add `<field>: ${{ parameters.<field> }}` to the
+  `fetch:template` step values (**most commonly forgotten hop**), add to `skeleton/catalog-info.yaml`.
+- Edit template: add to `parameters` (`ui:disabled: true` if locked). Ensure the property also exists
+  in the skeleton, with a default when the field is edit-only.
+- Handle empty arrays and optional values with Nunjucks guards.
+
+**Step C5 — Report.** List the files changed, the picker chosen and why, the descriptor path, and
+remind the user that the tech adapter must handle any new `spec.mesh.specific` field.
+
+### Removing a field
+
+**Step C6 — Scan for dependencies before editing anything.** Search the template folder for the field
+name and its descriptor property name: `ui:fieldName` / `ui:filter` on other fields, `dependencies` /
+`if-then` / `oneOf` conditionals, `DescriptorPicker` `source`/`optionsAt`, `required` arrays, step
+inputs, `targetPath`/`repoUrl`, skeleton files and docs, and whether the tech adapter consumes it.
+
+**Step C7 — If anything depends on it, stop.** Present a resolution plan — each dependency, its
+location, the proposed fix, and the risk — and **get explicit confirmation before touching any file**.
+If the scan is clean, say so and proceed.
+
+**Step C8 — Remove bottom-up:** skeleton files → step values → `template.yaml` parameters and
+`required` → `edit-template.yaml` → dependent fields per the approved plan → docs. Clean up leftovers
+(empty wizard pages, empty `required`, empty `specific`).
+
+**Step C9 — Report the impact.** Already-created components keep the orphaned property; if the tech
+adapter still reads it, removal breaks deployments. Recommend a version bump when the descriptor
+contract changed.
+
+**Step C10 — Validate** against the Field Changes section of the [Checklist](./references/checklist.md).
+
 ## Important Rules
 
 - **Never assume terminology.** "Data Product", "Output Port", etc. are the Data Mesh defaults. Always confirm what the customer calls these entities.
@@ -243,11 +315,15 @@ referenced template that is not yet in Witboost.
 - **Creation wizard = minimal, edit template = detailed.** Keep the creation wizard as simple as possible with sensible defaults. Shift complexity to the edit template. The user can always come back and edit later.
 - **Templates are not IDEs.** Don't try to replicate a full editor experience in the wizard. For complex configurations (advanced data quality rules, detailed data contracts, complex transformations), suggest the user edit the YAML file directly in the repository. Communicate this as a recommendation, not a limitation.
 - **Never use `RepoUrlPicker`** unless explicitly requested. Auto-generate repo names using a convention (default: `wit-dp-<name>` for systems, `wit-cmp-<name>` for components) and communicate the convention to the user.
+- **A field change is a surgical edit, not a regeneration.** When asked to add or remove one field, never rewrite the whole template. Read the existing files and follow their conventions.
+- **Ask for the data, choose the widget yourself.** Users describe what they need to collect; picking the field type and `ui:field` is your job.
+- **Propose the descriptor placement, don't ask for it.** Users rarely know where a value should sit under `spec.mesh`. Offer a concrete YAML fragment to confirm.
+- **Never remove a field before scanning for dependencies.** If anything references it, present a resolution plan and get explicit confirmation first.
 - **Never hardcode sample data in `skeleton/parameters.yaml`.** This file is auto-generated by Witboost. The template developer only provides Nunjucks expressions: `readonly` section for components (`__system__`, `__version__`), `values` section for systems (tech-adapter config). Witboost fills the rest from the wizard and `fetch:template` step.
 - **Explain and offer to auto-generate URNs.** Users often don't know what URNs are. Explain their purpose, offer to generate them automatically, and always tell the user what was generated.
 - **Be transparent about assumptions.** Whenever you auto-generate a value (URN, repo name, field default), clearly state what you generated and why. The user must know what's automatic and what requires their input.
 - **Always ask monorepo vs multi-repo.** This fundamentally changes how `repoUrl` is constructed and whether the system template needs repo annotations.
-- **Start from starter kit when possible.** Don't reinvent the wheel — if a starter kit template exists for the target technology, use it as the base.
+- **Start from starter kit when possible.** Don't reinvent the wheel — proactively ask if the user wants to start from a [Witboost Starter Kit](https://github.com/agile-lab-dev/witboost-starter-kit) template, unless they already brought it up. If yes, ask them for the GitHub URL of the specific starter kit repo (there's no fixed URL per technology — the user must point you to it) and read it before generating anything.
 - **Every Nunjucks variable must be traced end to end.** If `${{ values.foo }}` appears in the skeleton, then `foo: ${{ parameters.foo }}` must appear in the `fetch:template` step's `input.values`, and any reference to it in `skeleton/parameters.yaml` must resolve back to the same source.
 - **A Blueprint is not a template.** No `parameters`, no `steps`, no `skeleton`, no URNs. It never generates code; it orchestrates templates that already exist.
 - **Blueprints reference templates by `template:default/{metadata.name}`**, never by `urn:dmb:utm:...`. A dangling id breaks the blueprint card.

@@ -101,6 +101,25 @@ Validate every template against this checklist before delivery.
 - [ ] No `parameters`, `steps` or `skeleton` are present
 - [ ] The packaging preview was shown and explicitly confirmed by the user before writing any file
 
+## Field Changes (adding or removing a single field)
+
+See [Field Changes](./field-changes.md) for the full playbook.
+
+- [ ] The user confirmed the target: creation template, edit template, or both
+- [ ] The field type / `ui:field` was derived from the data description, not asked for
+- [ ] The descriptor placement under `spec.mesh` was proposed as YAML and confirmed
+- [ ] Parameter name, `fetch:template` `values` key and Nunjucks variable are identical
+- [ ] **Add**: the field exists in `parameters`, in `input.values`, and in the skeleton descriptor
+- [ ] **Add**: arrays handle the empty case and optional values are guarded by `{% if %}`
+- [ ] **Add**: creation and edit definitions match where the field exists in both
+- [ ] **Add**: edit-only fields have a default in `skeleton/catalog-info.yaml`
+- [ ] **Remove**: a dependency scan was run and reported before any edit
+- [ ] **Remove**: every dependency (conditionals, `ui:fieldName`, pickers, step inputs, docs) has an approved resolution
+- [ ] **Remove**: no dangling `${{ values.* }}` or `${{ parameters.* }}` reference remains
+- [ ] **Remove**: no empty wizard page, `required` array or `specific` block is left behind
+- [ ] Impact on already-created components and on the tech adapter was reported
+- [ ] A version bump was considered if the descriptor contract changed
+
 ## General
 
 - [ ] All YAML files are valid YAML (no syntax errors)

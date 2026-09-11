@@ -78,6 +78,7 @@ describe("domain skills", () => {
       "manifest-schema",
       "conventions",
       "blueprint",
+      "field-changes",
       "checklist",
     ]) {
       expect(existsSync(resolve(skillRoot, `references/${reference}.md`))).toBe(true);

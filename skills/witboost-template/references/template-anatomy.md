@@ -19,11 +19,11 @@ The default Data Mesh practice uses: Domain → System (Data Product) → Compon
 
 Templates almost always start from the [Witboost Starter Kit](https://github.com/agile-lab-dev/witboost-starter-kit), which is an index linking to 50+ separate template repositories (e.g., `witboost-snowflake-output-port-template`, `witboost-s3-storage-area-template`).
 
-**Before creating a template from scratch, ask the user:**
-1. Is there an existing starter kit template for your technology?
-2. Do you have an existing template to customize?
+**Before creating a template from scratch, proactively ask the user** (unless they already brought it up):
+1. Do you want to start from an existing starter kit template for your technology? If yes, give me the GitHub URL of that specific repository — the starter kit is just an index of 50+ repos, so point me to the one you want rather than having me guess.
+2. Do you have an existing template of your own to customize instead?
 
-If yes, start from the starter kit template and modify it. If no, follow the structure below.
+If the user gives a starter kit URL, fetch and read that repo before generating anything, and use it as the base. If no starter kit or existing template applies, follow the structure below.
 
 ## Folder Structure
 
