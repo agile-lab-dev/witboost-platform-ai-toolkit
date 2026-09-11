@@ -1,7 +1,7 @@
-# Component templates use "readonly" to store computed values that Witboost auto-populates.
-# NEVER hardcode sample data here — it must contain only Nunjucks expressions.
+# templates use "readonly" in a parameters.yaml file to store constant values. most of the times this is not even needed. it is needed when the user explicitly asks to store some readonly constant values in templates.
+# NEVER hardcode sample data here
+# reserved fields, DO NOT NAME your own parameters with these names:
 # __system__ links this component to its parent Data Product.
 # __version__ is derived from the component identifier.
-readonly:
-  __system__: ${{ parameters.dataproduct }}
-  __version__: '${{ parameters.identifier.split(".")[2] }}.0.0'
+# if you do NOT need readonly values, AVOID creating a parameters.yaml file at all, and Witboost will auto-generate it for you. 
+readonly: {}

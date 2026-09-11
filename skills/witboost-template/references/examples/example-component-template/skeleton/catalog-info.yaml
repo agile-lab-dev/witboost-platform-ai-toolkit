@@ -1,12 +1,12 @@
+%SKELETON
 {# Component skeleton catalog-info.yaml
    This is a GENERIC component template. The "kind" field in spec.mesh
    and spec.type must match the component type (outputport, workload, storage, etc.).
    The spec.mesh.specific section below is EMPTY because it depends on the tech adapter.
    Replace its contents with the fields your tech adapter expects.
-   Consult your tech adapter's README for the required structure. #}
+   Consult your tech adapter's README for the required structure. this comment can be ripped off when generating a new component template #}
 {% set domainNormalized = values.domain | replace(r/domain:| |-/, "") %}
 {% set dataProductMajorVersion = values.identifier.split(".")[2] %}
-
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
