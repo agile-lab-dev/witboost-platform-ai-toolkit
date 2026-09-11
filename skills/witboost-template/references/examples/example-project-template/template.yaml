@@ -142,7 +142,6 @@ spec:
         description: ${{ parameters.name }}
         repoUrl: gitlab.com?owner=my-org&repo=wit-dp-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.name.split(" ") | join("") | lower }} # same reasoning as above. moreover, owner should match the group where the repository will be created. this is a detail that must be asked to customer
         rootDirectory: .
-        dataproduct: ${{ parameters.name }}
 
     # ── GitHub ──
     # - id: publish
@@ -154,7 +153,6 @@ spec:
     #     description: ${{ parameters.name }}
     #     repoUrl: github.com?owner=my-org&repo=wit-dp-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.name.split(" ") | join("") | lower }} # same reasoning as above. moreover, owner should match the group where the repository will be created. this is a detail that must be asked to customer
     #     rootDirectory: .
-    #     parentRef: ${{ parameters.name }}
 
     # ── Azure DevOps ──
     # - id: publish
@@ -166,7 +164,6 @@ spec:
     #     description: ${{ parameters.name }}
     #     repoUrl: dev.azure.com?organization=my-org&owner=my-project&repo=wit-dp-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.name.split(" ") | join("") | lower }} # same reasoning as above. moreover, owner should match the group where the repository will be created. this is a detail that must be asked to customer
     #     rootDirectory: .
-    #     dataproduct: ${{ parameters.name }}
     #     defaultBranch: dev
 
     # ── BitBucket Server ──
@@ -179,7 +176,6 @@ spec:
     #     description: ${{ parameters.name }}
     #     repoUrl: bitbucket.org?owner=my-org&repo=wit-dp-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.name.split(" ") | join("") | lower }} # same reasoning as above. moreover, owner should match the group where the repository will be created. this is a detail that must be asked to customer
     #     rootDirectory: .
-    #     dataproduct: ${{ parameters.name }}
 
     # The register step is responsible for registering the newly created project in Witboost by providing the URL to the catalog-info.yaml file 
     - id: register

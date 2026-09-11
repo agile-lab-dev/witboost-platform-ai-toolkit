@@ -47,7 +47,7 @@
         },
         "annotations": {
           "type": "object",
-          "description": "Key-value annotations. Common keys: 'backstage.io/techdocs-ref' (usually 'dir:.'), git provider slug (e.g., 'gitlab.com/project-slug', 'dev.azure.com/repo-name', 'dev.azure.com/root-directory', 'github.com/project-slug').",
+          "description": "Key-value annotations. Common keys: 'backstage.io/techdocs-ref' (usually 'dir:.'), 'witboost.com/end-user-docs-ref', and — on monorepo systems — 'witboost.com/repo-name' (provider-agnostic; holds the repo name only, read by child component templates) plus the optional 'witboost.com/root-directory'.",
           "additionalProperties": { "type": "string" }
         },
         "links": {

@@ -151,7 +151,7 @@ spec:
         description: ${{ parameters.description }}
         repoUrl: gitlab.com?owner=my-org&repo=${{ parameters.dataProductRepo }} # my-org must be replaced with the actual GitLab organization that owns the repository. This is a customer-specific detail that must be provided.
         rootDirectory: *rootDirectory
-        dataproduct: ${{ parameters.dataproduct }} # for components, dataproduct links the component to its parent system
+        parentRef: ${{ parameters.dataproduct }} # for components, parentRef links the component to its parent system
 
     # ── GitHub ──
     # - id: publish
@@ -163,7 +163,7 @@ spec:
     #     description: ${{ parameters.description }}
     #     repoUrl: github.com?owner=my-org&repo=${{ parameters.dataProductRepo }} # my-org must be replaced with the actual GitHub organization that owns the repository. This is a customer-specific detail that must be provided.
     #     rootDirectory: *rootDirectory
-    #     parentRef: ${{ parameters.dataproduct }} # GitHub uses parentRef instead of dataproduct
+    #     parentRef: ${{ parameters.dataproduct }}
 
     # ── Azure DevOps ──
     # - id: publish
@@ -175,7 +175,7 @@ spec:
     #     description: ${{ parameters.description }}
     #     repoUrl: dev.azure.com?organization=my-org&owner=my-project&repo=${{ parameters.dataProductRepo }} # organization and owner must be replaced with the actual Azure DevOps organization and project that owns the repository. This is a customer-specific detail that must be provided.
     #     rootDirectory: *rootDirectory
-    #     dataproduct: ${{ parameters.dataproduct }}
+    #     parentRef: ${{ parameters.dataproduct }}
     #     defaultBranch: dev
 
     # ── BitBucket Server ──
@@ -188,26 +188,27 @@ spec:
     #     description: ${{ parameters.description }}
     #     repoUrl: bitbucket.org?owner=my-org&repo=${{ parameters.dataProductRepo }}
     #     rootDirectory: *rootDirectory
-    #     dataproduct: ${{ parameters.dataproduct }}
+    #     parentRef: ${{ parameters.dataproduct }}
 
     # in case the customer does not want a monorepo setting, i.e. each component has its own repository, the targetPath and rootDirectory would need to be adjusted accordingly.
     # you can see how this is done in the example-project-template, and adapt the naming convention of the repo accordingly e.g. wit-cmp-<domain>-<project-name>-<component-name>
 
-    # The register step is responsible for registering the newly created component in Witboost by providing the URL to the catalog-info.yaml file
+    # The register step is responsible for registering the newly created component in Witboost by providing the URL to the catalog-info.yaml file.
+    # In a monorepo setup the component lives in a subdirectory, so we register it via catalogInfoUrl:
+    # repoContentsUrl would point at the repo root, i.e. at the Data Product's catalog-info.yaml instead of the component's.
     - id: register
       name: Register
       action: catalog:register
       input:
-        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: /catalog-info.yaml
+        catalogInfoUrl: ${{ steps.publish.output.catalogInfoUrl }}
 
-    # For monorepo setup, the register step is a bit different for components that reside in subdirectories of the main repository.
-    # In such cases, we use the catalogInfoUrl
+    # If each component has its own repository (no monorepo), use this variant instead:
     # - id: register
     #   name: Register
     #   action: catalog:register
     #   input:
-    #     catalogInfoUrl: ${{ steps.publish.output.catalogInfoUrl }}
+    #     repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+    #     catalogInfoPath: /catalog-info.yaml
 
   # the output section defines the links and references that will be displayed to the user after the template execution. most of the times we are fine with these default links
   output:

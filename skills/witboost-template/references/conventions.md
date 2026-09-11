@@ -78,7 +78,7 @@ Templates must use the correct publish action for the target Git provider. The t
     description: ${{ parameters.description }}
     repoUrl: gitlab.com?owner=my-group&repo=my-repo
     rootDirectory: ${{ parameters.rootDirectory }}
-    dataproduct: ${{ parameters.dataproduct }}
+    parentRef: ${{ parameters.dataproduct }}
 ```
 
 ### GitHub
@@ -110,7 +110,7 @@ Templates must use the correct publish action for the target Git provider. The t
     description: ${{ parameters.description }}
     repoUrl: dev.azure.com?organization=my-org&owner=my-project&repo=my-repo
     rootDirectory: ${{ parameters.rootDirectory }}
-    dataproduct: ${{ parameters.dataproduct }}
+    parentRef: ${{ parameters.dataproduct }}
     defaultBranch: dev
 ```
 
@@ -124,6 +124,8 @@ Templates must use the correct publish action for the target Git provider. The t
     repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
     catalogInfoPath: /catalog-info.yaml
 ```
+
+Monorepo components live in a subdirectory, so they must register with `catalogInfoUrl: ${{ steps.publish.output.catalogInfoUrl }}` instead — see [Monorepo](template-anatomy.md#monorepo).
 
 ### Output Section (Same for All Providers)
 

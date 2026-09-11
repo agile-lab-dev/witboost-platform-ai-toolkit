@@ -240,23 +240,28 @@ All components live in the **same Git repository** as the parent system, each in
 
 **System template responsibilities:**
 - Creates the repository
-- Injects the repo name and root directory into `metadata.annotations` of `skeleton/catalog-info.yaml`, so child component templates can discover them:
+- Injects the repo name into `metadata.annotations` of `skeleton/catalog-info.yaml`, so child component templates can discover it:
 
 ```yaml
 # System skeleton/catalog-info.yaml
 metadata:
   annotations:
-    # Azure DevOps
-    dev.azure.com/repo-name: ${{ values.repoName }}
-    dev.azure.com/root-directory: ${{ values.rootDirectory }}
-    # GitLab
-    # gitlab.com/project-slug: my-group/my-repo
-    # GitHub
-    # github.com/project-slug: my-org/my-repo
+    witboost.com/repo-name: ${{ values.repoName }}
 ```
 
+The annotation key is **provider-agnostic** — always `witboost.com/repo-name`, regardless of whether the repo lives on GitLab, GitHub, Azure DevOps, or BitBucket. Do not use provider-prefixed keys (`gitlab.com/project-slug`, `dev.azure.com/repo-name`, …).
+
+The value is the **repo name only**, not a full URL or an org-qualified slug. It is computed in the system template's `fetch:template` step from the naming convention:
+
+```yaml
+values:
+  repoName: wit-dp-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.name.split(" ") | join("") | lower }}
+```
+
+The org/project/host part is not stored in the annotation — each component template hardcodes it in its own `repoUrl`, since it is a fixed customer-specific detail.
+
 **Component template responsibilities:**
-- Reads the parent system's repo info via `EntitySelectionPicker` with hidden fields:
+- Reads the parent system's repo name via `EntitySelectionPicker`:
 
 ```yaml
 dataProductRepo:
@@ -264,21 +269,12 @@ dataProductRepo:
   type: string
   ui:field: EntitySelectionPicker
   ui:fieldName: dataproduct
-  ui:property: metadata.annotations["dev.azure.com/repo-name"]
-  ui:options:
-    allowArbitraryValues: false
-
-dataProductRootDirectory:
-  title: Data Product Root Directory
-  type: string
-  ui:field: EntitySelectionPicker
-  ui:fieldName: dataproduct
-  ui:property: metadata.annotations["dev.azure.com/root-directory"]
+  ui:property: metadata.annotations["witboost.com/repo-name"]
   ui:options:
     allowArbitraryValues: false
 ```
 
-- Uses the parent's repo in the publish step, with a subdirectory `targetPath`:
+- Uses the parent's repo in the publish step, with a subdirectory `targetPath`. The component decides its own subdirectory: anchor it on `targetPath` with `&rootDirectory` and reuse it in the publish step.
 
 ```yaml
 steps:
@@ -286,19 +282,28 @@ steps:
     action: fetch:template
     input:
       url: ./skeleton
-      targetPath: &rootDirectory ./components/${{ parameters.name | lower | replace(r/ /, "") }}
+      targetPath: &rootDirectory ./components/${{ parameters.name | replace(r/ /, "") | lower }}
       values:
         # ...
-        repoUrl: &repoUrl dev.azure.com?organization=my-org&owner=my-project&repo=${{ parameters.dataProductRepo }}
-        rootDirectory: *rootDirectory
 
   - id: publish
     action: witboostMeshComponent:publish:azure
     input:
-      repoUrl: *repoUrl
+      repoUrl: dev.azure.com?organization=my-org&owner=my-project&repo=${{ parameters.dataProductRepo }}
       rootDirectory: *rootDirectory
       parentRef: ${{ parameters.dataproduct }}
 ```
+
+- Registers via `catalogInfoUrl`, not `repoContentsUrl`. The `repoContentsUrl` variant points at the repo root, which in a monorepo is the *system's* `catalog-info.yaml`, not the component's:
+
+```yaml
+  - id: register
+    action: catalog:register
+    input:
+      catalogInfoUrl: ${{ steps.publish.output.catalogInfoUrl }}
+```
+
+**Optional: system-imposed root directory.** If the system must dictate where components live (rather than each component choosing `./components/<name>`), the system additionally injects `witboost.com/root-directory` and the component reads it with a second `EntitySelectionPicker` field instead of using the anchor. Prefer the anchor unless the customer explicitly requires this.
 
 ### Multi-Repo
 
@@ -315,8 +320,9 @@ Each component gets its **own dedicated Git repository**. The template creates a
 |--------|----------|------------|
 | Repo count | 1 per system | 1 per component |
 | Component isolation | Shared repo, separate directories | Full isolation |
-| System template | Must inject repo annotations | No extra annotations needed |
-| Component template | Reads repo from parent annotations | Creates its own repo |
+| System template | Must inject `witboost.com/repo-name` | No extra annotations needed |
+| Component template | Reads repo name from parent annotation | Creates its own repo |
+| Register step | `catalogInfoUrl` | `repoContentsUrl` |
 | CI/CD | Shared pipeline, path-based triggers | Independent pipelines |
 | Common pattern | Most customer deployments | Simpler for small projects |
 

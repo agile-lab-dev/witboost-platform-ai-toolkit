@@ -30,6 +30,7 @@ Validate every template against this checklist before delivery.
   - Bitbucket Server: `witboostMeshComponent:publish:bitbucketServer`
 - [ ] Publish step has valid `repoUrl` format for the provider
 - [ ] Register step uses `catalog:register` with correct `catalogInfoPath`
+- [ ] Monorepo components register with `catalogInfoUrl`, not `repoContentsUrl` + `catalogInfoPath`
 - [ ] Step output references are correct: `${{ steps.{stepId}.output.{field} }}`
 - [ ] `output.links` section includes repository URL and catalog entity link
 
