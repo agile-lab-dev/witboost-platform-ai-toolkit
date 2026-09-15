@@ -30,7 +30,7 @@ mkdir -p ~/witboost-workspace
 cd ~/witboost-workspace
 
 npx skills add \
-  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.7" \
+  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.8" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter \
   --skill witboost-template
@@ -58,8 +58,8 @@ npm config set -- \
 From the same `~/witboost-workspace` directory, use the exact version matching the skill tag:
 
 ```bash
-npx @witboost/ai-toolkit@0.2.7 setup --dir .
-npx @witboost/ai-toolkit@0.2.7 doctor --dir .
+npx @witboost/ai-toolkit@0.2.8 setup --dir .
+npx @witboost/ai-toolkit@0.2.8 doctor --dir .
 ```
 
 `setup` refuses a workspace directory without the required project skill lock or with skill refs that do not match the CLI release. `doctor` verifies the same alignment again.
