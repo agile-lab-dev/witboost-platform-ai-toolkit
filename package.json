@@ -6,14 +6,15 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git"
+    "url": "git+https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git"
   },
-  "homepage": "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit",
+  "homepage": "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit#readme",
   "bugs": {
-    "url": "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit/-/issues"
+    "url": "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit/issues"
   },
   "publishConfig": {
-    "registry": "https://gitlab.com/api/v4/projects/85577854/packages/npm/"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "bin": {
     "witboost-toolkit": "dist/cli.js"

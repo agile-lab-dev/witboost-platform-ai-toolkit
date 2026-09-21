@@ -30,7 +30,7 @@ mkdir -p ~/witboost-workspace
 cd ~/witboost-workspace
 
 npx skills add \
-  "https://gitlab.com/AgileFactory/Witboost.Mesh/ai/witboost-tech-adapter-ai-toolkit.git#v0.2.8" \
+  "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git#v0.2.8" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter \
   --skill witboost-template
@@ -42,18 +42,7 @@ Once installation is complete your skills will be available to your coding agent
 
 ## Configure A Workspace
 
-The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. It is published to this project GitLab npm registry by the matching release tag.
-
-Configure the token issued by Witboost before installing the private package:
-
-```bash
-export WITBOOST_NPM_TOKEN=<token-issued-by-witboost>
-npm config set @witboost:registry \
-  "https://gitlab.com/api/v4/projects/85577854/packages/npm/"
-npm config set -- \
-  "//gitlab.com/api/v4/projects/85577854/packages/npm/:_authToken" \
-  "$WITBOOST_NPM_TOKEN"
-```
+The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. It is published as a public package on npmjs by the matching release tag. No registry configuration or authentication is required.
 
 From the same `~/witboost-workspace` directory, use the exact version matching the skill tag:
 
@@ -81,7 +70,7 @@ The workspace is an organizational root. Implementations and decisions remain in
 ## Create A Tech Adapter
 
 ```bash
-npx @witboost/ai-toolkit@0.2.7 create tech-adapter java my-adapter --dir .
+npx @witboost/ai-toolkit@0.2.8 create tech-adapter java my-adapter --dir .
 ```
 
 The CLI fetches the exact scaffold commit recorded in `config/scaffolds.json`, verifies its structure, writes `docs/scaffold-provenance.json`, and starts independent Git history.

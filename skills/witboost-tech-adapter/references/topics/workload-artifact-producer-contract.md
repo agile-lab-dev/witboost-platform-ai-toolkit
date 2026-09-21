@@ -2,9 +2,9 @@
 
 ## Scope
 
-This contract applies only when a workload template generates a component repository and CI/CD process that builds or releases executable business logic. Non-workload component templates typically do not have an artifact producer contract.
+This contract applies only when a workload template generates a component repository and CI/CD process that builds or releases executable business logic. This is usually the case of components performing data ingestion or processing: generally speaking, whenever there's a business logic to be developed. Non-workload component templates typically do not have an artifact producer contract.
 
-The workload template owns this generated development and release process. The generated CI/CD executes it in the scaffolded workload repository; it is not a separate domain owner.
+The usual approach is that workload template owns this generated development and release process. The generated CI/CD executes it in the scaffolded workload repository; it is not a separate domain owner.
 
 ## Upstream Interface Checklist
 
