@@ -13,7 +13,7 @@ Use when the user explicitly requests creation and the target tech adapter repos
 If the workspace is not configured, propose this exact-version command and ask for approval before executing it:
 
 ```bash
-npx @witboost/ai-toolkit@<toolkit-release> setup --dir <workspace-dir>
+npx @witboost/platform-team-ai-toolkit@<toolkit-release> setup --dir <workspace-dir>
 ```
 
 Workspace setup is a separate mutation and is not implied by the request to create an adapter.
@@ -23,7 +23,7 @@ Workspace setup is a separate mutation and is not implied by the request to crea
 Run:
 
 ```bash
-npx @witboost/ai-toolkit@<toolkit-release> create tech-adapter <java|python> <adapter-name> --dir <workspace-dir>
+npx @witboost/platform-team-ai-toolkit@<toolkit-release> create tech-adapter <java|python> <adapter-name> --dir <workspace-dir>
 ```
 
 Then verify:

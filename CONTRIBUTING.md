@@ -45,7 +45,7 @@ CLI and skills currently use a synchronized SemVer `0.x` release train. A releas
 4. Build and inspect the npm package.
 5. Push an immutable Git tag `vX.Y.Z` matching `package.json` version `X.Y.Z`.
 
-Tag pipelines validate the version match and automatically publish `@witboost/ai-toolkit` to the project GitLab npm registry using `CI_JOB_TOKEN`. The same Git tag is the immutable release consumed by `npx skills`.
+GitHub Actions validates the version match and publishes `@witboost/platform-team-ai-toolkit` publicly to npmjs through npm Trusted Publishing. The same Git tag is the immutable release consumed by `npx skills`.
 
 Breaking changes before `1.0.0` increment the minor version and require migration notes.
 

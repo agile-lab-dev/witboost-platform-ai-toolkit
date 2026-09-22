@@ -30,7 +30,7 @@ mkdir -p ~/witboost-workspace
 cd ~/witboost-workspace
 
 npx skills add \
-  "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git#v0.2.8" \
+  "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git#v0.3.0" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter \
   --skill witboost-template
@@ -47,8 +47,8 @@ The separate npm CLI owns only workspace structure, version metadata, diagnostic
 From the same `~/witboost-workspace` directory, use the exact version matching the skill tag:
 
 ```bash
-npx @witboost/ai-toolkit@0.2.8 setup --dir .
-npx @witboost/ai-toolkit@0.2.8 doctor --dir .
+npx @witboost/platform-team-ai-toolkit@0.3.0 setup --dir .
+npx @witboost/platform-team-ai-toolkit@0.3.0 doctor --dir .
 ```
 
 `setup` refuses a workspace directory without the required project skill lock or with skill refs that do not match the CLI release. `doctor` verifies the same alignment again.
@@ -70,7 +70,7 @@ The workspace is an organizational root. Implementations and decisions remain in
 ## Create A Tech Adapter
 
 ```bash
-npx @witboost/ai-toolkit@0.2.8 create tech-adapter java my-adapter --dir .
+npx @witboost/platform-team-ai-toolkit@0.3.0 create tech-adapter java my-adapter --dir .
 ```
 
 The CLI fetches the exact scaffold commit recorded in `config/scaffolds.json`, verifies its structure, writes `docs/scaffold-provenance.json`, and starts independent Git history.
