@@ -29,8 +29,9 @@ Create the workspace directory and change into it. Keep this as the current dire
 mkdir -p ~/witboost-workspace
 cd ~/witboost-workspace
 
+TOOLKIT_VERSION="$(npm view @witboost/platform-team-ai-toolkit version)"
 npx skills add \
-  "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git#v0.3.0" \
+  "https://github.com/agile-lab-dev/witboost-platform-ai-toolkit.git#v${TOOLKIT_VERSION}" \
   --skill witboost-toolkit \
   --skill witboost-tech-adapter \
   --skill witboost-template
@@ -42,13 +43,14 @@ Once installation is complete your skills will be available to your coding agent
 
 ## Configure A Workspace
 
-The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding. It is published as a public package on npmjs by the matching release tag. No registry configuration or authentication is required.
+The separate npm CLI owns only workspace structure, version metadata, diagnostics, and reproducible scaffolding.
 
-From the same `~/witboost-workspace` directory, use the exact version matching the skill tag:
+From the same `~/witboost-workspace` directory, resolve the current release from npm. See [GitHub Releases](https://github.com/agile-lab-dev/witboost-platform-ai-toolkit/releases) for release notes and immutable tags.
 
 ```bash
-npx @witboost/platform-team-ai-toolkit@0.3.0 setup --dir .
-npx @witboost/platform-team-ai-toolkit@0.3.0 doctor --dir .
+TOOLKIT_VERSION="$(npm view @witboost/platform-team-ai-toolkit version)"
+npx @witboost/platform-team-ai-toolkit@"${TOOLKIT_VERSION}" setup --dir .
+npx @witboost/platform-team-ai-toolkit@"${TOOLKIT_VERSION}" doctor --dir .
 ```
 
 `setup` refuses a workspace directory without the required project skill lock or with skill refs that do not match the CLI release. `doctor` verifies the same alignment again.
@@ -70,7 +72,8 @@ The workspace is an organizational root. Implementations and decisions remain in
 ## Create A Tech Adapter
 
 ```bash
-npx @witboost/platform-team-ai-toolkit@0.3.0 create tech-adapter java my-adapter --dir .
+TOOLKIT_VERSION="$(npm view @witboost/platform-team-ai-toolkit version)"
+npx @witboost/platform-team-ai-toolkit@"${TOOLKIT_VERSION}" create tech-adapter java my-adapter --dir .
 ```
 
 The CLI fetches the exact scaffold commit recorded in `config/scaffolds.json`, verifies its structure, writes `docs/scaffold-provenance.json`, and starts independent Git history.
