@@ -185,6 +185,7 @@ Generate files in this order. **After generating, clearly summarize to the user 
    - Use `apiVersion: backstage.io/v1alpha1`
    - Set `kind: System` or `kind: Component` matching `spec.generates`
    - Fill `spec.mesh` with all required fields (name, description, kind, version, URNs, dependsOn)
+   - When supplying `skeleton/parameters.yaml`, initialize `readonly.__version__` if the descriptor references it, using the repository's initial-version convention. Verify that `spec.mesh.version` renders as a non-empty string.
    - Fill `spec.mesh.specific` with the fields expected by the tech adapter
    - Use Nunjucks expressions referencing `values.*` — every variable must exist in the `fetch:template` step's `input.values`
    - Handle empty arrays: `{% if values.arr | length > 0 %}...{% else %}[]{% endif %}`
